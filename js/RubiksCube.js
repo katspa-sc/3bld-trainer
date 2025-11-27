@@ -8,7 +8,7 @@ const DEFAULT_POSITION_TO_LETTER_MAP = {
 };
 
 const SPEFFZ_LETTER_MAP = {
-    0: 'A', 1: 'A', 2: 'B', 3: 'D', 4: 'UC', 5: 'D', 6: 'B', 7: 'C', 8: 'C',
+    0: 'A', 1: 'A', 2: 'B', 3: 'D', 4: 'UC', 5: 'B', 6: 'D', 7: 'C', 8: 'C',
     9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'O', 17: 'O',
     18: 'I', 19: 'I', 20: 'J', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
     27: 'U', 28: 'U', 29: 'V', 30: 'X', 31: 'DC', 32: 'V', 33: 'X', 34: 'W', 35: 'W',
@@ -3846,20 +3846,16 @@ function applySchemeFromGrid() {
         const index = parseInt(input.getAttribute('data-index'));
         
         // If the input is a center (disabled), we preserve the EXISTING value 
-        // from the current map (or default) so we don't overwrite "UC" with the visual label "U".
         if (CENTER_INDICES.includes(index)) {
              newMap[index] = POSITION_TO_LETTER_MAP[index] || DEFAULT_POSITION_TO_LETTER_MAP[index];
         } else {
-             // For normal stickers, read the user input
              let val = input.value.trim().toUpperCase();
              if (val === "") val = "-"; 
              newMap[index] = val;
         }
     });
 
-    // Update the live application state
     Object.assign(POSITION_TO_LETTER_MAP, newMap);
-    
     return newMap;
 }
 
@@ -3876,8 +3872,7 @@ function populateGridFromScheme(schemeMap) {
         const val = schemeMap[index];
         
         if (val !== undefined) {
-            // Only update editable fields. 
-            // We leave the centers as they are in the HTML (visual labels "U", "F", etc.)
+            // Only update editable fields (non-centers)
             if (!input.disabled) {
                 input.value = val;
             }
@@ -3894,17 +3889,28 @@ if (saveSchemeButton) {
         const schemeMap = applySchemeFromGrid();
 
         try {
-            // Save as JSON string to preserve object structure (and 2-char centers)
             localStorage.setItem("customLetterSchemeJSON", JSON.stringify(schemeMap));
             alert("Custom letter scheme saved!");
-            
-            // Refresh display if the trainer is active
-            if (typeof nextScramble === "function") {
-                nextScramble(false); 
-            }
         } catch (e) {
             console.error("Error saving scheme:", e);
             alert("Failed to save scheme.");
+        }
+    });
+}
+
+/**
+ * Event Listener: Speffz Scheme
+ */
+const speffzSchemeButton = document.getElementById("speffzLetterScheme");
+if (speffzSchemeButton) {
+    speffzSchemeButton.addEventListener("click", function () {
+        if (confirm("Load standard Speffz scheme?")) {
+            // Update Internal Map
+            Object.assign(POSITION_TO_LETTER_MAP, SPEFFZ_LETTER_MAP);
+            // Update Visual Grid
+            populateGridFromScheme(SPEFFZ_LETTER_MAP);
+            // Save immediately so it persists on reload
+            localStorage.setItem("customLetterSchemeJSON", JSON.stringify(SPEFFZ_LETTER_MAP));
         }
     });
 }
@@ -3925,7 +3931,6 @@ if (resetSchemeButton) {
             populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
             
             alert("Reset to default.");
-            if (typeof nextScramble === "function") nextScramble(false);
         }
     });
 }
@@ -3939,28 +3944,20 @@ document.addEventListener("DOMContentLoaded", function () {
     if (savedJSON) {
         try {
             const savedMap = JSON.parse(savedJSON);
-            
-            // Apply to Global Map
             Object.assign(POSITION_TO_LETTER_MAP, savedMap);
-            
-            // Fill visual grid
             populateGridFromScheme(savedMap);
-            
             console.log("Custom lettering scheme loaded (JSON).");
         } catch (e) {
             console.error("Error parsing saved scheme, reverting to default.", e);
             populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
         }
     } else {
-        // Fallback for backward compatibility (if user had the old string version)
+        // Fallback for backward compatibility
         const oldString = localStorage.getItem("customLetterScheme");
         if (oldString && oldString.length === 54) {
-             // We won't try to auto-migrate automatically because of the shifting bug risks.
-             // Just load defaults to be safe, or let them re-enter.
-             console.log("Old string format detected but ignored to prevent errors. Please re-save.");
+             console.log("Old string format detected but ignored. Please re-save.");
         }
         
-        // Load default values into the grid so the user has a starting point
         populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
     }
 });
