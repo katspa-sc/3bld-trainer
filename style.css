@@ -781,3 +781,59 @@ body.solve-success-flash {
   /* This class now ONLY sets the target color. The transition is handled above. */
   background-color: #0b4300;
 }
+
+/* Cube Net Layout */
+.cube-net-container {
+  display: grid;
+  grid-template-columns: 90px 90px 90px 90px; /* 4 columns for L, F, R, B */
+  grid-template-rows: 90px 90px 90px; /* 3 rows for U, Middle, D */
+  gap: 5px;
+  margin: 20px auto;
+  width: max-content;
+}
+
+.face-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2px;
+  border: 1px solid #333;
+  padding: 2px;
+  background-color: #222;
+}
+
+/* Positioning faces in the 4x3 grid */
+.face-u { grid-column: 2; grid-row: 1; } /* Top */
+.face-l { grid-column: 1; grid-row: 2; } /* Left */
+.face-f { grid-column: 2; grid-row: 2; } /* Front */
+.face-r { grid-column: 3; grid-row: 2; } /* Right */
+.face-b { grid-column: 4; grid-row: 2; } /* Back */
+.face-d { grid-column: 2; grid-row: 3; } /* Bottom */
+
+.sticker-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: black;
+  padding: 0;
+  text-transform: uppercase;
+}
+
+/* Face Colors (Backgrounds for inputs) */
+.face-u .sticker-input { background-color: #ffffff; } /* White */
+.face-l .sticker-input { background-color: #ffaa00; } /* Orange */
+.face-f .sticker-input { background-color: #00dd00; } /* Green */
+.face-r .sticker-input { background-color: #ff0000; color: white; } /* Red */
+.face-b .sticker-input { background-color: #0000ff; color: white; } /* Blue */
+.face-d .sticker-input { background-color: #ffff00; } /* Yellow */
+
+/* Center stickers styling */
+.sticker-input:disabled {
+  background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)); /* Slightly darker */
+  cursor: default;
+  color: #555;
+  font-size: 10px;
+}
