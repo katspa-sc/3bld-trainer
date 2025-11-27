@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.9.3 - selection logic and tts fix"; 
+const APP_VERSION = "v0.9.4 - custom lettering scheme"; 
 
 const regularDrillOptions = [
     "klik", "bip",
