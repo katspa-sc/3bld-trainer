@@ -1,5 +1,5 @@
 const DEFAULT_POSITION_TO_LETTER_MAP = {
-    0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8',
+    0: 'A', 1: 'A', 2: 'O', 3: 'I', 4: 'UC', 5: 'O', 6: 'I', 7: 'Y', 8: 'Y',
     9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
     18: 'J', 19: 'U', 20: 'U', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
     27: 'C', 28: 'C', 29: 'D', 30: 'Z', 31: 'DC', 32: 'D', 33: 'Z', 34: 'W', 35: 'W',
@@ -7,14 +7,16 @@ const DEFAULT_POSITION_TO_LETTER_MAP = {
     45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
 };
 
-// const DEFAULT_POSITION_TO_LETTER_MAP = {
-//     0: 'A', 1: 'A', 2: 'O', 3: 'I', 4: 'UC', 5: 'O', 6: 'I', 7: 'Y', 8: 'Y',
-//     9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
-//     18: 'J', 19: 'U', 20: 'U', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
-//     27: 'C', 28: 'C', 29: 'D', 30: 'Z', 31: 'DC', 32: 'D', 33: 'Z', 34: 'W', 35: 'W',
-//     36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
-//     45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
-// };
+const SPEFFZ_LETTER_MAP = {
+    0: 'A', 1: 'A', 2: 'B', 3: 'D', 4: 'UC', 5: 'D', 6: 'B', 7: 'C', 8: 'C',
+    9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'O', 17: 'O',
+    18: 'I', 19: 'I', 20: 'J', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
+    27: 'U', 28: 'U', 29: 'V', 30: 'X', 31: 'DC', 32: 'V', 33: 'X', 34: 'W', 35: 'W',
+    36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
+    45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
+};
+
+const CENTER_INDICES = [4, 13, 22, 31, 40, 49];
 
 let previousScramble = "";
 let previousCycle = "";
@@ -3833,58 +3835,51 @@ visualFeedbackCheckbox.addEventListener("change", function () {
 });
 
 /**
- * Reads 54 characters from the visual grid and updates the map.
+ * Reads inputs from the visual grid and updates the global map.
+ * Returns the object map to be saved as JSON.
  */
 function applySchemeFromGrid() {
     const inputs = document.querySelectorAll('.sticker-input');
-    let schemeString = "";
-    let isValid = true;
-
-    // Sort inputs by data-index to ensure correct order 0-53
-    const sortedInputs = Array.from(inputs).sort((a, b) => {
-        return parseInt(a.getAttribute('data-index')) - parseInt(b.getAttribute('data-index'));
-    });
-
-    if (sortedInputs.length !== 54) {
-        console.error("Error: Found " + sortedInputs.length + " inputs, expected 54.");
-        return false;
-    }
-
     const newMap = {};
 
-    sortedInputs.forEach(input => {
+    inputs.forEach(input => {
         const index = parseInt(input.getAttribute('data-index'));
-        let val = input.value.trim().toUpperCase();
-
-        // If user leaves it empty, use a placeholder
-        if (val === "") val = "-"; 
-
-        newMap[index] = val;
-        schemeString += val;
+        
+        // If the input is a center (disabled), we preserve the EXISTING value 
+        // from the current map (or default) so we don't overwrite "UC" with the visual label "U".
+        if (CENTER_INDICES.includes(index)) {
+             newMap[index] = POSITION_TO_LETTER_MAP[index] || DEFAULT_POSITION_TO_LETTER_MAP[index];
+        } else {
+             // For normal stickers, read the user input
+             let val = input.value.trim().toUpperCase();
+             if (val === "") val = "-"; 
+             newMap[index] = val;
+        }
     });
 
+    // Update the live application state
     Object.assign(POSITION_TO_LETTER_MAP, newMap);
-    return schemeString;
+    
+    return newMap;
 }
 
 /**
- * Populates the visual grid from a 54-char string.
+ * Populates the visual grid from a map object.
  */
-function populateGridFromScheme(schemeString) {
-    // If passed an object (like the default map), convert to string first
-    if (typeof schemeString === 'object') {
-        let str = "";
-        for(let i=0; i<54; i++) str += schemeString[i];
-        schemeString = str;
-    }
+function populateGridFromScheme(schemeMap) {
+    if (!schemeMap) return;
 
     const inputs = document.querySelectorAll('.sticker-input');
     
     inputs.forEach(input => {
         const index = parseInt(input.getAttribute('data-index'));
-        if (schemeString[index]) {
+        const val = schemeMap[index];
+        
+        if (val !== undefined) {
+            // Only update editable fields. 
+            // We leave the centers as they are in the HTML (visual labels "U", "F", etc.)
             if (!input.disabled) {
-                input.value = schemeString[index];
+                input.value = val;
             }
         }
     });
@@ -3896,16 +3891,20 @@ function populateGridFromScheme(schemeString) {
 const saveSchemeButton = document.getElementById("saveLetterScheme");
 if (saveSchemeButton) {
     saveSchemeButton.addEventListener("click", function () {
-        const schemeString = applySchemeFromGrid();
+        const schemeMap = applySchemeFromGrid();
 
-        if (schemeString) {
-            localStorage.setItem("customLetterScheme", schemeString);
+        try {
+            // Save as JSON string to preserve object structure (and 2-char centers)
+            localStorage.setItem("customLetterSchemeJSON", JSON.stringify(schemeMap));
             alert("Custom letter scheme saved!");
             
-            // Refresh display
+            // Refresh display if the trainer is active
             if (typeof nextScramble === "function") {
                 nextScramble(false); 
             }
+        } catch (e) {
+            console.error("Error saving scheme:", e);
+            alert("Failed to save scheme.");
         }
     });
 }
@@ -3917,9 +3916,14 @@ const resetSchemeButton = document.getElementById("resetLetterScheme");
 if (resetSchemeButton) {
     resetSchemeButton.addEventListener("click", function () {
         if (confirm("Reset to default lettering scheme?")) {
-            localStorage.removeItem("customLetterScheme");
+            localStorage.removeItem("customLetterSchemeJSON");
+            
+            // Revert global map
             Object.assign(POSITION_TO_LETTER_MAP, DEFAULT_POSITION_TO_LETTER_MAP);
+            
+            // Revert visual grid
             populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
+            
             alert("Reset to default.");
             if (typeof nextScramble === "function") nextScramble(false);
         }
@@ -3930,27 +3934,32 @@ if (resetSchemeButton) {
  * Initialization
  */
 document.addEventListener("DOMContentLoaded", function () {
-    const savedScheme = localStorage.getItem("customLetterScheme");
+    const savedJSON = localStorage.getItem("customLetterSchemeJSON");
     
-    if (savedScheme && savedScheme.length === 54) {
-        applySchemeFromGrid(); // Updates the internal map from DOM? No, wait.
-        // We need to load FROM storage INTO grid, then apply map.
-        
-        // 1. Populate Grid
-        populateGridFromScheme(savedScheme);
-        
-        // 2. Apply to Map
-        const inputs = document.querySelectorAll('.sticker-input');
-        const newMap = {};
-        inputs.forEach(input => {
-             // If input is disabled (center), we use the saved char, not the UI label 'U'
-            const index = parseInt(input.getAttribute('data-index'));
-            newMap[index] = savedScheme[index];
-        });
-        Object.assign(POSITION_TO_LETTER_MAP, newMap);
-        
-        console.log("Custom lettering scheme loaded.");
+    if (savedJSON) {
+        try {
+            const savedMap = JSON.parse(savedJSON);
+            
+            // Apply to Global Map
+            Object.assign(POSITION_TO_LETTER_MAP, savedMap);
+            
+            // Fill visual grid
+            populateGridFromScheme(savedMap);
+            
+            console.log("Custom lettering scheme loaded (JSON).");
+        } catch (e) {
+            console.error("Error parsing saved scheme, reverting to default.", e);
+            populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
+        }
     } else {
+        // Fallback for backward compatibility (if user had the old string version)
+        const oldString = localStorage.getItem("customLetterScheme");
+        if (oldString && oldString.length === 54) {
+             // We won't try to auto-migrate automatically because of the shifting bug risks.
+             // Just load defaults to be safe, or let them re-enter.
+             console.log("Old string format detected but ignored to prevent errors. Please re-save.");
+        }
+        
         // Load default values into the grid so the user has a starting point
         populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
     }
