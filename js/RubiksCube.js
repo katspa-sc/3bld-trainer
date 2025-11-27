@@ -16,6 +16,15 @@ const SPEFFZ_LETTER_MAP = {
     45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
 };
 
+const HANUS_LETTER_MAP = {
+    0: 'A', 1: 'A', 2: 'B', 3: 'C', 4: 'UC', 5: 'B', 6: 'C', 7: 'Q', 8: 'Q',
+    9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'O', 17: 'O',
+    18: 'I', 19: 'I', 20: 'J', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
+    27: 'U', 28: 'U', 29: 'W', 30: 'Y', 31: 'DC', 32: 'W', 33: 'Y', 34: 'Z', 35: 'Z',
+    36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
+    45: 'D', 46: 'D', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
+};
+
 const CENTER_INDICES = [4, 13, 22, 31, 40, 49];
 
 let previousScramble = "";
@@ -3911,6 +3920,20 @@ if (speffzSchemeButton) {
             populateGridFromScheme(SPEFFZ_LETTER_MAP);
             // Save immediately so it persists on reload
             localStorage.setItem("customLetterSchemeJSON", JSON.stringify(SPEFFZ_LETTER_MAP));
+        }
+    });
+}
+
+const hanusSchemeButton = document.getElementById("hanusLetterScheme");
+if (hanusSchemeButton) {
+    hanusSchemeButton.addEventListener("click", function () {
+        if (confirm("Load gigachad Hanuś scheme?")) {
+            // Update Internal Map
+            Object.assign(POSITION_TO_LETTER_MAP, HANUS_LETTER_MAP);
+            // Update Visual Grid
+            populateGridFromScheme(HANUS_LETTER_MAP);
+            // Save immediately so it persists on reload
+            localStorage.setItem("customLetterSchemeJSON", JSON.stringify(HANUS_LETTER_MAP));
         }
     });
 }
