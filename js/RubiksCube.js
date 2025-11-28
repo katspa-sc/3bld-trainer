@@ -3072,7 +3072,11 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         
         // Update Visuals
         Object.keys(selectedSets).forEach(k => selectedSets[k] = newState);
-        document.querySelectorAll(".gridButton").forEach(btn => btn.classList.toggle("untoggled", !newState));
+        document.querySelectorAll(".gridButton").forEach(btn => {
+            if (!btn.disabled) { // Don't toggle buffers
+                btn.classList.toggle("untoggled", !newState);
+            }
+        });
         
         // Update Logic
         fetchedAlgs.forEach(alg => stickerState[alg.key] = newState);
@@ -3097,7 +3101,20 @@ document.getElementById("letterSelector").addEventListener("click", function () 
 
     // --- BUILD THE ALPHABET GRID (BY FACE ROWS) ---
     
-    // Define the faces in order: U, L, F, R, B, D
+    // 1. Updated Palette to match Custom Scheme Input Boxes (Standard WCA Colors)
+    const FACE_PALETTE = {
+        "U": { bg: "#FFFFFF", txt: "#000000" }, // Pure White
+        "L": { bg: "#FF5800", txt: "#FFFFFF" }, // WCA Orange
+        "F": { bg: "#009E60", txt: "#FFFFFF" }, // WCA Green
+        "R": { bg: "#C41E3A", txt: "#FFFFFF" }, // WCA Red
+        "B": { bg: "#0051BA", txt: "#FFFFFF" }, // WCA Blue
+        "D": { bg: "#FFD500", txt: "#000000" }  // WCA Yellow
+    };
+
+    // 2. Define Buffer Indices (To mark them as disabled)
+    const BUFFER_INDICES = currentMode === "edge" ? [7, 19] : [8, 9, 20];
+
+    // 3. Define Face Order
     const faceDefinitions = [
         { name: "U", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
         { name: "L", indices: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
@@ -3107,62 +3124,76 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         { name: "D", indices: [27, 28, 29, 30, 31, 32, 33, 34, 35] }
     ];
 
-    // Determine valid indices for the current mode (Corner vs Edge)
+    // Determine valid indices for the current mode
     const validIndices = new Set(currentMode === "corner" ? CORNER_FACELET_INDICES : EDGE_FACELET_INDICES);
-    const displayedLetters = new Set(); // To avoid duplicates if a letter is mapped twice
+    const displayedLetters = new Set(); 
 
     faceDefinitions.forEach(face => {
-        // Create a row container for this face
+        // Create a row container
         const rowDiv = document.createElement("div");
         rowDiv.style.display = "flex";
         rowDiv.style.justifyContent = "center";
         rowDiv.style.flexWrap = "wrap";
-        rowDiv.style.marginBottom = "8px"; // Spacing between rows
+        rowDiv.style.marginBottom = "8px"; 
         
-        // Iterate through indices on this face
         face.indices.forEach(index => {
-            // Check if this index is a valid sticker for the current mode (Corner/Edge)
+            // Check if this index is a valid sticker OR a buffer sticker
             if (validIndices.has(index)) {
                 let letter = POSITION_TO_LETTER_MAP[index];
                 
-                // If we have a letter, and we haven't shown it yet (unique sets)
+                // Allow display if letter exists and hasn't been shown (or is a buffer)
                 if (letter && letter.trim() !== "" && letter !== "-" && !displayedLetters.has(letter)) {
-                    displayedLetters.add(letter);
-
+                    
                     const btn = document.createElement("button");
                     btn.className = "gridButton cube-select-button";
                     btn.textContent = letter;
                     btn.dataset.letter = letter;
                     
-                    // Dynamic Coloring
-                    const { background, text } = LETTER_COLORS[letter] || { background: "grey", text: "white" };
-                    btn.style.backgroundColor = background;
-                    btn.style.color = text;
+                    // --- COLORING LOGIC ---
+                    const isBuffer = BUFFER_INDICES.includes(index);
+
+                    if (isBuffer) {
+                        // Buffer Styling: Black/Dark Grey, Disabled
+                        btn.style.backgroundColor = "#222222"; 
+                        btn.style.color = "#777777";
+                        btn.style.border = "1px solid #444";
+                        btn.style.cursor = "default";
+                        btn.disabled = true; 
+                        btn.title = "Buffer Piece";
+                    } else {
+                        // Standard Face Coloring
+                        const palette = FACE_PALETTE[face.name];
+                        btn.style.backgroundColor = palette.bg;
+                        btn.style.color = palette.txt;
+                        
+                        // Track displayed letters to prevent duplicates (only for valid sets)
+                        displayedLetters.add(letter);
+
+                        // Initial Visual State
+                        if (selectedSets[letter] === undefined) selectedSets[letter] = true;
+                        btn.classList.toggle("untoggled", !selectedSets[letter]);
+
+                        // Interaction Handlers
+                        btn.addEventListener("click", () => handleGridButtonClick(btn, letter));
+                        btn.addEventListener("contextmenu", (e) => {
+                            e.preventDefault();
+                            showPairSelectionGrid(letter);
+                        });
+                        btn.addEventListener("touchstart", () => {
+                            const timer = setTimeout(() => showPairSelectionGrid(letter), 500);
+                            btn.addEventListener("touchend", () => clearTimeout(timer), {once: true});
+                        });
+                    }
+
                     btn.style.width = "40px";
                     btn.style.height = "40px";
-                    btn.style.margin = "3px"; // Slightly tighter margin for rows
-
-                    // Initial Visual State
-                    if (selectedSets[letter] === undefined) selectedSets[letter] = true;
-                    btn.classList.toggle("untoggled", !selectedSets[letter]);
-
-                    // Click Handlers
-                    btn.addEventListener("click", () => handleGridButtonClick(btn, letter));
-                    btn.addEventListener("contextmenu", (e) => {
-                        e.preventDefault();
-                        showPairSelectionGrid(letter);
-                    });
-                    btn.addEventListener("touchstart", () => {
-                        const timer = setTimeout(() => showPairSelectionGrid(letter), 500);
-                        btn.addEventListener("touchend", () => clearTimeout(timer), {once: true});
-                    });
+                    btn.style.margin = "3px";
 
                     rowDiv.appendChild(btn);
                 }
             }
         });
 
-        // Only append the row if it has buttons (centers might be empty depending on mode/map)
         if (rowDiv.children.length > 0) {
             selectionGrid.appendChild(rowDiv);
         }
@@ -3170,7 +3201,6 @@ document.getElementById("letterSelector").addEventListener("click", function () 
 
     selectionGrid.style.display = "block";
 });
-
 
 function updateUserDefinedAlgs() {
     console.log("Filtering algorithms based on centralized stickerState...");
@@ -3312,12 +3342,6 @@ async function filterAlgsByLetter(selectedLetter) {
         missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
     }
 }
-
-// Add an event listener to the dropdown selector
-document.getElementById("letterSelector").addEventListener("change", async function () {
-    const selectedLetter = this.value; // Get the selected letter
-    await filterAlgsByLetter(selectedLetter); // Call the filtering method
-});
 
 document.getElementById("connectSmartCubeReplica").addEventListener("click", function () {
     document.getElementById("connectSmartCube").click(); // Simulate a click on the original button
@@ -3555,20 +3579,12 @@ function bindApplyButton() {
     }
 }
 
-// Function to close the sticker selection grid
-// Close sticker selection grid by pressing "Apply Selection" button
 function pressApplySelectionButton() {
     const applySelectionButton = document.getElementById("applyPairSelectionButton");
     if (applySelectionButton) {
         applySelectionButton.click(); // Simulate a click on the "Apply Selection" button
     }
 }
-
-// // Trigger "Apply Selection" when "Select Sets" is clicked
-// document.getElementById("letterSelector").addEventListener("click", function () {
-//     pressApplySelectionButton();
-// });
-
 
 function determineCycleType() {
     return currentMode; // Return "corner" or "edge" based on the toggle state
@@ -3690,75 +3706,6 @@ drillingModeToggle.addEventListener("change", function () {
 
     console.log(`Drilling Mode switched to: ${isDrillingMode ? "Drilling" : "Regular"}`);
 });
-
-// custom scheme and tts support
-
-// function setCustomLetterScheme(scheme) {
-//     if (scheme.length !== 54) {
-//         alert("The letter scheme must b exactly 54 characters long.");
-//         return false;
-//     }
-
-//     const newMap = {};
-//     for (let i = 0; i < 54; i++) {
-//         newMap[i] = scheme[i];
-//     }
-
-//     // Update the global POSITION_TO_LETTER_MAP
-//     Object.assign(POSITION_TO_LETTER_MAP, newMap);
-
-//     // Save to localStorage for persistence
-//     localStorage.setItem("customLetterScheme", scheme);
-
-//    // alert("Custom letter scheme saved successfully!");
-//     return true;
-// }
-
-// document.addEventListener("DOMContentLoaded", function () {
-//     const savedScheme = localStorage.getItem("customLetterScheme");
-//     if (savedScheme) {
-//         setCustomLetterScheme(savedScheme);
-//         document.getElementById("letterScheme").value = savedScheme;
-//     }
-// });
-
-// document.getElementById("saveLetterScheme").addEventListener("click", function () {
-//     const scheme = document.getElementById("letterScheme").value.trim();
-//     if (setCustomLetterScheme(scheme)) {
-//         alert("Custom letter scheme saved successfully!");
-//     }
-// });
-
-// document.getElementById("resetLetterScheme").addEventListener("click", function () {
-//     localStorage.removeItem("customLetterScheme");
-//     Object.assign(POSITION_TO_LETTER_MAP, {
-//         0: 'A', 1: 'A', 2: 'O', 3: 'I', 4: 'UC', 5: 'O', 6: 'I', 7: 'Y', 8: 'Y',
-//         9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
-//         18: 'J', 19: 'U', 20: 'U', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
-//         27: 'C', 28: 'C', 29: 'D', 30: 'Z', 31: 'DC', 32: 'D', 33: 'Z', 34: 'W', 35: 'W',
-//         36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
-//         45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
-//     });
-//     document.getElementById("letterScheme").value = "";
-//     alert("Letter scheme reset to default.");
-// });
-
-// document.addEventListener("DOMContentLoaded", function () {
-//     const savedLanguage = localStorage.getItem("ttsLanguage");
-//     if (savedLanguage) {
-//         document.getElementById("ttsLanguage").value = savedLanguage;
-//     }
-// });
-
-// document.getElementById("saveTTSLanguage").addEventListener("click", function () {
-//     const language = document.getElementById("ttsLanguage").value.trim();
-//     if (language) {
-//         localStorage.setItem("ttsLanguage", language);
-//         alert("TTS language saved successfully!");
-//     } else {
-//         alert("Please enter a valid language code (e.g., n-US, pl-PL).");
-//     }
-// })
 
 async function fetchAndApplyPartialFilter() {
     const partialProxyUrl = currentMode === "corner"
@@ -4001,13 +3948,10 @@ if (hanusSchemeButton) {
     });
 }
 
-/**
- * Event Listener: Reset to Default
- */
-const resetSchemeButton = document.getElementById("resetLetterScheme");
-if (resetSchemeButton) {
-    resetSchemeButton.addEventListener("click", function () {
-        if (confirm("Reset to default lettering scheme?")) {
+const kacperSchemeButton = document.getElementById("kacperLetterScheme");
+if (kacperSchemeButton) {
+    kacperSchemeButton.addEventListener("click", function () {
+        if (confirm("Load Kacper's lettering scheme?")) {
             localStorage.removeItem("customLetterSchemeJSON");
             
             // Revert global map
@@ -4016,7 +3960,7 @@ if (resetSchemeButton) {
             // Revert visual grid
             populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
             
-            alert("Reset to default.");
+            alert("Set to Kacper's scheme.");
         }
     });
 }
