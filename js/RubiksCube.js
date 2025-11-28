@@ -1,31 +1,6 @@
-const DEFAULT_POSITION_TO_LETTER_MAP = {
-    0: 'A', 1: 'A', 2: 'O', 3: 'I', 4: 'UC', 5: 'O', 6: 'I', 7: 'Y', 8: 'Y',
-    9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
-    18: 'J', 19: 'U', 20: 'U', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
-    27: 'C', 28: 'C', 29: 'D', 30: 'Z', 31: 'DC', 32: 'D', 33: 'Z', 34: 'W', 35: 'W',
-    36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
-    45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
-};
-
-const SPEFFZ_LETTER_MAP = {
-    0: 'A', 1: 'A', 2: 'B', 3: 'D', 4: 'UC', 5: 'B', 6: 'D', 7: 'C', 8: 'C',
-    9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'O', 17: 'O',
-    18: 'I', 19: 'I', 20: 'J', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
-    27: 'U', 28: 'U', 29: 'V', 30: 'X', 31: 'DC', 32: 'V', 33: 'X', 34: 'W', 35: 'W',
-    36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
-    45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
-};
-
-const HANUS_LETTER_MAP = {
-    0: 'A', 1: 'A', 2: 'B', 3: 'C', 4: 'UC', 5: 'B', 6: 'C', 7: 'Q', 8: 'Q',
-    9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'O', 17: 'O',
-    18: 'I', 19: 'I', 20: 'J', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
-    27: 'U', 28: 'U', 29: 'W', 30: 'Y', 31: 'DC', 32: 'W', 33: 'Y', 34: 'Z', 35: 'Z',
-    36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
-    45: 'D', 46: 'D', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
-};
-
-const CENTER_INDICES = [4, 13, 22, 31, 40, 49];
+// Indices for standard facelet order (U R F D L B)
+const CORNER_FACELET_INDICES = [0, 2, 6, 8, 9, 11, 15, 17, 18, 20, 24, 26, 27, 29, 33, 35, 36, 38, 42, 44, 45, 47, 51, 53];
+const EDGE_FACELET_INDICES = [1, 3, 5, 7, 10, 12, 14, 16, 19, 21, 23, 25, 28, 30, 32, 34, 37, 39, 41, 43, 46, 48, 50, 52];
 
 let previousScramble = "";
 let previousCycle = "";
@@ -3027,109 +3002,188 @@ document.addEventListener("DOMContentLoaded", function () {
     selectionGrid.style.display = "none"; // Explicitly set the initial display property
 });
 
-document.getElementById("letterSelector").addEventListener("click", function () {
-    const selectionGrid = document.getElementById("selectionGrid");
-
-    // Ensure the grid is cleared of previous buttons
-    const existingCloseButton = selectionGrid.querySelector(".close-button");
-    if (!existingCloseButton) {
-        // Add the red "X" button
-        const closeButton = document.createElement("button");
-        closeButton.textContent = "X";
-        closeButton.className = "close-button close-set"; // Use the CSS class
-        closeButton.addEventListener("click", () => {
-            selectionGrid.style.display = "none"; // Close the grid without saving
-        });
-        selectionGrid.appendChild(closeButton);
-    }
-
-    const existingToggleButton = selectionGrid.querySelector(".toggle-button");
-    if (!existingToggleButton) {
-        // Add the toggle button
-        const toggleButton = document.createElement("button");
-        toggleButton.textContent = "Toggle All Sets";
-        toggleButton.className = "toggle-button"; // Use the CSS class
-        toggleButton.addEventListener("click", () => {
-            // Determine if all sets are currently toggled on
-            const allToggled = Object.values(selectedSets).every(state => state);
-
-            // Toggle all sets
-            Object.keys(selectedSets).forEach(setName => {
-                selectedSets[setName] = !allToggled; // Toggle all sets based on the current state
-            });
-
-            // Update the visual state of the buttons
-            document.querySelectorAll(".gridButton").forEach(button => {
-                const setName = button.dataset.letter;
-                button.classList.toggle("untoggled", !selectedSets[setName]); // Update appearance
-            });
-
-            saveSelectedSets(); // Save the updated state to localStorage
-            //updateUserDefinedAlgs(); // Update the textbox with combined algorithms
-        });
-        selectionGrid.appendChild(toggleButton);
-    }
-
-    // Toggle the visibility of the grid
-    selectionGrid.style.display = selectionGrid.style.display === "none" ? "block" : "none";
-});
-
 // Object to store the state of each set (toggled on/off)
 const selectedSets = {};
 
-// Initialize the grid buttons with toggle functionality
-function handleGridButtonClick(button, setName) {
-    selectedSets[setName] = !selectedSets[setName]; // Toggle the state
-    button.classList.toggle("untoggled", !selectedSets[setName]); // Update appearance
+// New state for the inverses toggle
+let disableInversesMode = localStorage.getItem(getStorageKey("disableInversesMode")) === "true";
 
-    saveSelectedSets(); // Save the state to localStorage
+document.getElementById("letterSelector").addEventListener("click", function () {
+    const selectionGrid = document.getElementById("selectionGrid");
+    
+    // 1. CLEAR EVERYTHING
+    selectionGrid.innerHTML = "";
 
-    if (selectedSets[setName]) {
-        // Open the pair selection grid only if the set is being toggled on
-        showPairSelectionGrid(setName);
-    } else {
-        // Close the sticker selection grid if the set is toggled off
-        const pairSelectionGrid = document.getElementById("pairSelectionGrid");
-        if (pairSelectionGrid.style.display === "block") {
-            pairSelectionGrid.style.display = "none";
-        }
-    }
-}
+    // --- BUILD HEADER (Checkbox & Close) ---
+    const headerDiv = document.createElement("div");
+    headerDiv.style.display = "flex";
+    headerDiv.style.justifyContent = "space-between";
+    headerDiv.style.alignItems = "center";
+    headerDiv.style.marginBottom = "10px";
+    headerDiv.style.color = "white";
 
-// Initialize the grid buttons with toggle functionality
-function initializeGridButtons() {
-    document.querySelectorAll(".gridButton").forEach(button => {
-        const setName = button.dataset.letter; // Get the set name from the button's data attribute
+    // Disable Inverses Checkbox
+    const checkboxWrapper = document.createElement("div");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = "disableInversesCheckbox";
+    checkbox.checked = disableInversesMode;
+    checkbox.style.transform = "scale(1.3)";
+    checkbox.style.marginRight = "8px";
+    checkbox.addEventListener("change", function() {
+        disableInversesMode = this.checked;
+        localStorage.setItem(getStorageKey("disableInversesMode"), disableInversesMode);
+    });
+    
+    const label = document.createElement("label");
+    label.textContent = "Disable Inverses (e.g. disabling 'A' also disables 'BA')";
+    label.htmlFor = "disableInversesCheckbox";
+    
+    checkboxWrapper.appendChild(checkbox);
+    checkboxWrapper.appendChild(label);
+    headerDiv.appendChild(checkboxWrapper);
 
-        button.addEventListener("click", function () {
-            handleGridButtonClick(button, setName);
+    // Close Button
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "X";
+    closeBtn.style.backgroundColor = "red";
+    closeBtn.style.color = "white";
+    closeBtn.style.border = "none";
+    closeBtn.style.padding = "5px 10px";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.addEventListener("click", () => selectionGrid.style.display = "none");
+    headerDiv.appendChild(closeBtn);
+
+    selectionGrid.appendChild(headerDiv);
+
+    // --- BUILD ACTION BUTTONS ---
+    const actionsDiv = document.createElement("div");
+    actionsDiv.style.textAlign = "center";
+    actionsDiv.style.marginBottom = "15px";
+
+    // Toggle All
+    const toggleBtn = document.createElement("button");
+    toggleBtn.textContent = "Toggle All Sets";
+    toggleBtn.className = "large-button"; 
+    toggleBtn.style.marginRight = "10px";
+    toggleBtn.addEventListener("click", () => {
+        const allToggled = Object.values(selectedSets).every(s => s);
+        const newState = !allToggled;
+        
+        // Update Visuals
+        Object.keys(selectedSets).forEach(k => selectedSets[k] = newState);
+        document.querySelectorAll(".gridButton").forEach(btn => btn.classList.toggle("untoggled", !newState));
+        
+        // Update Logic
+        fetchedAlgs.forEach(alg => stickerState[alg.key] = newState);
+        
+        saveSelectedSets();
+        saveStickerState();
+    });
+
+    // Apply Button
+    const applyBtn = document.createElement("button");
+    applyBtn.textContent = "Apply Selections";
+    applyBtn.className = "large-button";
+    applyBtn.style.backgroundColor = "#28a745"; // Green
+    applyBtn.addEventListener("click", () => {
+        updateUserDefinedAlgs();
+        selectionGrid.style.display = "none";
+    });
+
+    actionsDiv.appendChild(toggleBtn);
+    actionsDiv.appendChild(applyBtn);
+    selectionGrid.appendChild(actionsDiv);
+
+    // --- BUILD THE ALPHABET GRID (BY FACE ROWS) ---
+    
+    // Define the faces in order: U, L, F, R, B, D
+    const faceDefinitions = [
+        { name: "U", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
+        { name: "L", indices: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
+        { name: "F", indices: [18, 19, 20, 21, 22, 23, 24, 25, 26] },
+        { name: "R", indices: [9, 10, 11, 12, 13, 14, 15, 16, 17] },
+        { name: "B", indices: [45, 46, 47, 48, 49, 50, 51, 52, 53] },
+        { name: "D", indices: [27, 28, 29, 30, 31, 32, 33, 34, 35] }
+    ];
+
+    // Determine valid indices for the current mode (Corner vs Edge)
+    const validIndices = new Set(currentMode === "corner" ? CORNER_FACELET_INDICES : EDGE_FACELET_INDICES);
+    const displayedLetters = new Set(); // To avoid duplicates if a letter is mapped twice
+
+    faceDefinitions.forEach(face => {
+        // Create a row container for this face
+        const rowDiv = document.createElement("div");
+        rowDiv.style.display = "flex";
+        rowDiv.style.justifyContent = "center";
+        rowDiv.style.flexWrap = "wrap";
+        rowDiv.style.marginBottom = "8px"; // Spacing between rows
+        
+        // Iterate through indices on this face
+        face.indices.forEach(index => {
+            // Check if this index is a valid sticker for the current mode (Corner/Edge)
+            if (validIndices.has(index)) {
+                let letter = POSITION_TO_LETTER_MAP[index];
+                
+                // If we have a letter, and we haven't shown it yet (unique sets)
+                if (letter && letter.trim() !== "" && letter !== "-" && !displayedLetters.has(letter)) {
+                    displayedLetters.add(letter);
+
+                    const btn = document.createElement("button");
+                    btn.className = "gridButton cube-select-button";
+                    btn.textContent = letter;
+                    btn.dataset.letter = letter;
+                    
+                    // Dynamic Coloring
+                    const { background, text } = LETTER_COLORS[letter] || { background: "grey", text: "white" };
+                    btn.style.backgroundColor = background;
+                    btn.style.color = text;
+                    btn.style.width = "40px";
+                    btn.style.height = "40px";
+                    btn.style.margin = "3px"; // Slightly tighter margin for rows
+
+                    // Initial Visual State
+                    if (selectedSets[letter] === undefined) selectedSets[letter] = true;
+                    btn.classList.toggle("untoggled", !selectedSets[letter]);
+
+                    // Click Handlers
+                    btn.addEventListener("click", () => handleGridButtonClick(btn, letter));
+                    btn.addEventListener("contextmenu", (e) => {
+                        e.preventDefault();
+                        showPairSelectionGrid(letter);
+                    });
+                    btn.addEventListener("touchstart", () => {
+                        const timer = setTimeout(() => showPairSelectionGrid(letter), 500);
+                        btn.addEventListener("touchend", () => clearTimeout(timer), {once: true});
+                    });
+
+                    rowDiv.appendChild(btn);
+                }
+            }
         });
 
-        // Apply colors based on the LETTER_COLORS map
-        const { background, text } = LETTER_COLORS[setName] || { background: "grey", text: "white" }; // Default to grey if not found
-        button.style.backgroundColor = background;
-        button.style.color = text;
-
-        // Apply the initial state visually
-        button.classList.toggle("untoggled", !selectedSets[setName]);
+        // Only append the row if it has buttons (centers might be empty depending on mode/map)
+        if (rowDiv.children.length > 0) {
+            selectionGrid.appendChild(rowDiv);
+        }
     });
-}
 
-// Call the method to initialize the grid buttons
-initializeGridButtons();
+    selectionGrid.style.display = "block";
+});
+
 
 function updateUserDefinedAlgs() {
-    const selectedSetNames = Object.keys(selectedSets)
-        .filter(setName => selectedSets[setName]); // Get all toggled sets
+    console.log("Filtering algorithms based on centralized stickerState...");
 
-    // Use the verbose filtering method
-    const uniqueAlgs = filterAlgorithmsVerbose(selectedSetNames, fetchedAlgs, stickerState, selectedSets);
+    // Filter algs where the specific pair key (e.g. "AB") is NOT false.
+    const uniqueAlgs = [...new Set(
+        fetchedAlgs
+            .filter(pair => stickerState[pair.key] !== false)
+            .map(pair => pair.value.trim())
+    )];
 
-    // Update the userDefinedAlgs textbox
-    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
-    userDefinedAlgs.value = uniqueAlgs.join("\n"); // Combine all algorithms into a single string
-
-    console.log("User-defined algorithms updated:", uniqueAlgs.length);
+    document.getElementById("userDefinedAlgs").value = uniqueAlgs.join("\n");
+    console.log(`Updated textbox with ${uniqueAlgs.length} algorithms.`);
 }
 
 function filterAlgorithmsVerbose(selectedSetNames, fetchedAlgs, stickerState, selectedSets) {
@@ -3306,9 +3360,12 @@ function showPairSelectionGrid(setName) {
     leftPairGrid.innerHTML = "";
     rightPairGrid.innerHTML = "";
 
+    // 1. REPLACEMENT: Use dynamic scheme letters instead of ALL_LETTERS
+    const activeLetters = getActiveSchemeLetters(); 
+
     // Generate all pairs for the selected letter
-    const pairs = ALL_LETTERS.map(letter => `${setName}${letter}`)
-        .concat(ALL_LETTERS.map(letter => `${letter}${setName}`)) // Include both positions
+    const pairs = activeLetters.map(letter => `${setName}${letter}`)
+        .concat(activeLetters.map(letter => `${letter}${setName}`)) // Include both positions
         .filter(pair => pair[0] !== pair[1]) // Skip pairs where both letters are the same
         .filter(pair => !isExcludedCombination(pair)) // Skip excluded combinations
         .sort(customComparator); // Sort using the custom comparator
@@ -3323,8 +3380,13 @@ function showPairSelectionGrid(setName) {
     // Group stickers by color
     const colorGroups = {};
     pairs.forEach(pair => {
+        // Determine the "face" color based on the letter that ISN'T the setName
+        // (e.g. For Set A, pair AB: Color is determined by B)
         const colorLetter = pair[0] === setName ? pair[1] : pair[0];
-        const { background } = LETTER_COLORS[colorLetter] || { background: "grey" }; // Default to grey if not found
+        
+        // Get color definition, default to grey
+        const { background } = LETTER_COLORS[colorLetter] || { background: "grey" }; 
+        
         if (!colorGroups[background]) {
             colorGroups[background] = [];
         }
@@ -3332,33 +3394,35 @@ function showPairSelectionGrid(setName) {
     });
 
     // Create rows for each color group
-    Object.keys(colorGroups).forEach(color => {
+    Object.keys(colorGroups).forEach(colorName => {
         const leftRow = document.createElement("div");
         const rightRow = document.createElement("div");
         leftRow.className = "grid-row";
         rightRow.className = "grid-row";
 
-        colorGroups[color].forEach(pair => {
+        colorGroups[colorName].forEach(pair => {
             const button = document.createElement("button");
-            button.className = "pairButton";
+            
+            // 2. REPLACEMENT: Use CSS classes instead of inline styles
+            button.classList.add("pairButton"); // Base styling
+            
+            // Add a specific class for the color (e.g., "sticker-red", "sticker-white")
+            // We sanitize the colorName just in case (remove spaces, lowercase)
+            const safeColorName = colorName.toLowerCase().replace(/\s+/g, '-');
+            button.classList.add(`sticker-${safeColorName}`); 
+
             button.textContent = pair;
-            button.dataset.pair = pair; // Add data attribute for easy selection
+            button.dataset.pair = pair; 
 
-            // Determine which letter to use for coloring
-            const colorLetter = pair[0] === setName ? pair[1] : pair[0];
-            const { background, text } = LETTER_COLORS[colorLetter] || { background: "grey", text: "white" }; // Default to grey if not found
-
-            // Apply colors
-            button.style.backgroundColor = background;
-            button.style.color = text;
-
-            // Apply the untoggled state
-            button.classList.toggle("untoggled", !stickerState[pair]);
+            // Apply the untoggled state class if needed
+            if (!stickerState[pair]) {
+                button.classList.add("untoggled");
+            }
 
             // Determine if the button is on the left or right side
             const isLeftSide = pair.startsWith(setName);
 
-            // Add click event listener with conditional logic
+            // Add click event listener
             button.addEventListener("click", () => {
                 const newState = !stickerState[pair];
 
@@ -3374,7 +3438,6 @@ function showPairSelectionGrid(setName) {
                     // Find and visually update the corresponding right-side button
                     const reverseButton = document.querySelector(`.pairButton[data-pair="${reversePair}"]`);
                     if (reverseButton) {
-                        // Explicitly set the class based on the new state to ensure synchronization
                         if (newState) {
                             reverseButton.classList.remove("untoggled");
                         } else {
@@ -3382,9 +3445,8 @@ function showPairSelectionGrid(setName) {
                         }
                     }
                 }
-                // If a right-side button is clicked, no further action is needed.
-
-                saveStickerState(); // Save the updated state to localStorage
+                
+                saveStickerState(); 
             });
 
             // Append the button to the appropriate row
@@ -3407,6 +3469,7 @@ function showPairSelectionGrid(setName) {
     // Show the grid
     pairSelectionGrid.style.display = "block";
 }
+
 // Add event listener to the "Apply Selection" button
 document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
@@ -3984,3 +4047,55 @@ document.addEventListener("DOMContentLoaded", function () {
         populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
     }
 });
+
+function getActiveSchemeLetters() {
+    const indices = currentMode === "corner" ? CORNER_FACELET_INDICES : EDGE_FACELET_INDICES;
+    const letters = new Set();
+
+    indices.forEach(index => {
+        // Get letter from map, default to empty if undefined
+        let char = POSITION_TO_LETTER_MAP[index];
+        // Clean up (handle empty strings, dashes, or undefined)
+        if (char && char.trim() !== "" && char !== "-") {
+            letters.add(char.trim());
+        }
+    });
+
+    // Return sorted unique letters
+    return Array.from(letters).sort();
+}
+
+function handleGridButtonClick(button, setName) {
+    // 1. Toggle the visual state of the Set
+    const newState = !selectedSets[setName];
+    selectedSets[setName] = newState;
+    
+    // Update the button appearance
+    button.classList.toggle("untoggled", !newState);
+    saveSelectedSets();
+
+    // 2. Batch Update stickerState (The Logic)
+    if (fetchedAlgs.length > 0) {
+        fetchedAlgs.forEach(item => {
+            const key = item.key; // e.g., "AB"
+            if (key.length < 2) return;
+
+            const firstChar = key[0];
+            const secondChar = key[1];
+
+            // Case A: The pair STARTS with the letter (e.g., "AB") - Always update
+            if (firstChar === setName) {
+                stickerState[key] = newState;
+            }
+
+            // Case B: The pair ENDS with the letter (e.g., "BA")
+            // Update ONLY if "Disable Inverses" is turned ON.
+            if (disableInversesMode && secondChar === setName) {
+                stickerState[key] = newState;
+            }
+        });
+        
+        saveStickerState();
+        console.log(`Updated Set ${setName} to ${newState}. Disable Inverses (Dual-update): ${disableInversesMode}`);
+    }
+}

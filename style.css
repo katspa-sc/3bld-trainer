@@ -837,3 +837,71 @@ body.solve-success-flash {
   color: #555;
   font-size: 10px;
 }
+
+/* Base Button Styling */
+.pairButton {
+  /* Define dimensions here to keep JS clean */
+  width: 40px;
+  height: 40px; 
+  margin: 4px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.pairButton:active {
+  transform: scale(0.95);
+}
+
+/* 
+ State: Untoggled 
+ This overrides the color classes below when the sticker is disabled
+*/
+.pairButton.untoggled {
+  background-color: #333 !important; /* Dark grey */
+  color: #555 !important;            /* Dim text */
+  border-color: #444 !important;
+}
+
+/* 
+ Color Classes 
+ Matches standard LETTER_COLORS keys: white, yellow, red, orange, green, blue 
+*/
+
+.sticker-white {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.sticker-yellow {
+  background-color: #ffd500;
+  color: #000000;
+}
+
+.sticker-red {
+  background-color: #dc0000;
+  color: #ffffff;
+}
+
+.sticker-orange {
+  background-color: #ff5800;
+  color: #ffffff;
+}
+
+.sticker-green {
+  background-color: #009e60;
+  color: #ffffff;
+}
+
+.sticker-blue {
+  background-color: #0051ba;
+  color: #ffffff;
+}
+
+/* Fallback for unknown colors */
+.sticker-grey {
+  background-color: #888888;
+  color: #ffffff;
+}
