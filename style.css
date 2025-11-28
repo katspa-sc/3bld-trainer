@@ -7,7 +7,6 @@ body {
   background: #282c34;
   font-family: Arial;
   color: white;
-  /* Animate background color changes (e.g., success flash) */
   transition: background-color 0.4s ease-in-out;
 }
 
@@ -116,19 +115,7 @@ p.cycle {
 .large-button:hover { background-color: #3658b0; }
 .large-button:active { background-color: #2a4a8a; transform: scale(0.95); }
 
-.apply-button {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  margin: 5px;
-  border-radius: 4px;
-}
-.apply-button:hover { background-color: #45a049; }
-
-/* Specific Button Colors */
+/* Specific Button Colors (Main Menu) */
 .fetch-algs-button { background-color: #9C27B0; color: black; }
 .fetch-algs-button:hover { background-color: #7B1FA2; }
 .fetch-algs-button:active { background-color: #6A1B9A; }
@@ -186,58 +173,55 @@ p.cycle {
 
 /* --- Selection Grid (Set Selector) --- */
 
-/* Base Modal Styling */
 .selection-grid {
   display: none;
   position: fixed;
   top: 5%;
   left: 50%;
   transform: translateX(-50%);
-  width: 95%;        /* Take up most width on mobile */
-  max-width: 680px;  /* Much thinner on desktop */
+  width: 95%;        
+  max-width: 680px;  
   max-height: 90vh;
   overflow-y: auto;
   background-color: #333;
   border: 2px solid black;
-  padding: 15px;     /* Slight increase in padding */
+  padding: 15px;     
   z-index: 100;
   border-radius: 8px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-/* Face Rows (Rows containing Left and Right groups) */
+/* Face Rows */
 .face-row {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 8px; /* Slightly more space between rows */
+  margin-bottom: 8px; 
   background-color: rgba(255, 255, 255, 0.05);
   padding: 4px;
   border-radius: 8px;
 }
 
-/* Half-row container (Left vs Right) */
 .face-group {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  flex: 1; /* Take equal width */
+  flex: 1; 
 }
 
-/* Vertical separator */
 .face-separator {
   width: 2px;
-  height: 40px;      /* Taller to match bigger buttons */
+  height: 40px;      
   background-color: #555;
-  margin: 0 12px;    /* Tighter horizontal spacing */
+  margin: 0 12px;    
 }
 
 /* Set Selector Buttons */
 .set-btn {
-  width: 48px;       /* Bigger width */
-  height: 48px;      /* Bigger height */
-  margin: 3px;       /* Little more breathing room */
-  font-size: 1.1rem; /* Larger, readable font */
+  width: 48px;       
+  height: 48px;      
+  margin: 3px;       
+  font-size: 1.1rem; 
   font-weight: bold;
   border: 1px solid #333;
   border-radius: 6px;
@@ -255,7 +239,6 @@ p.cycle {
 
 .set-btn:active { transform: scale(0.95); }
 
-/* Buffer Piece Styling */
 .set-btn.buffer {
   background-color: #222 !important;
   color: #555 !important;
@@ -263,43 +246,47 @@ p.cycle {
   cursor: default;
 }
 
-.face-U { 
-  background-color: #ffffff; 
-  color: #000000; 
+.set-btn.face-u, 
+.face-u .sticker-input { 
+    background-color: #ffffff; 
+    color: #000000; 
 }
 
-.face-L { 
-  background-color: #ffaa00; 
-  color: #000000; 
+.set-btn.face-l, 
+.face-l .sticker-input { 
+    background-color: #ffaa00; 
+    color: #000000; 
 }
 
-.face-F { 
-  background-color: #00dd00; 
-  color: #000000; 
+.set-btn.face-f, 
+.face-f .sticker-input { 
+    background-color: #00dd00; 
+    color: #000000; 
 }
 
-.face-R { 
-  background-color: #ff0000; 
-  color: #ffffff; 
+.set-btn.face-r, 
+.face-r .sticker-input { 
+    background-color: #ff0000; 
+    color: #000000; 
 }
 
-.face-B { 
-  background-color: #0000ff; 
-  color: #ffffff; 
+.set-btn.face-b, 
+.face-b .sticker-input { 
+    background-color: #0000ff; 
+    color: #cfcfcf;
 }
 
-.face-D { 
-  background-color: #ffff00; 
-  color: #000000; 
+.set-btn.face-d, 
+.face-d .sticker-input { 
+    background-color: #ffff00; 
+    color: #000000; 
 }
-
-/* --- Pair Selection Grid --- */
 
 #pairSelectionGrid {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%); /* True centering */
+  transform: translate(-50%, -50%);
   width: 550px;
   max-height: 90vh;
   overflow-y: auto;
@@ -308,7 +295,7 @@ p.cycle {
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 20px;
-  z-index: 101; /* Above set selector */
+  z-index: 101; 
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -357,7 +344,6 @@ p.cycle {
 
 .pairButton:active { transform: scale(0.95); }
 
-/* Untoggled Pair State */
 .pairButton.untoggled {
   background-color: #333 !important;
   color: #555 !important;
@@ -426,7 +412,6 @@ p.cycle {
   text-transform: uppercase;
 }
 
-/* Scheme Colors (Inputs) */
 .face-u .sticker-input { background-color: #ffffff; }
 .face-l .sticker-input { background-color: #ffaa00; }
 .face-f .sticker-input { background-color: #00dd00; }
@@ -602,6 +587,11 @@ form input, form label, form button {
   transition: 0.3s;
 }
 
+.toggle-slider:hover {
+  filter: brightness(1.1);
+  transform: scale(1.05);
+}
+
 .toggle-container input:checked + .toggle-slider {
   background-color: #FF0000;
 }
@@ -618,6 +608,11 @@ form input, form label, form button {
   border-radius: 20px;
   cursor: pointer;
   transition: 0.3s;
+}
+
+.toggle-slider-drilling:hover {
+  filter: brightness(1.1);
+  transform: scale(1.05);
 }
 
 .toggle-container-drilling input:checked + .toggle-slider-drilling {
@@ -661,48 +656,17 @@ form input, form label, form button {
   }
 }
 
-/* --- Set Selector Labels --- */
+/* --- Set Selector Headers & Labels --- */
 
-.set-labels-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #ccc;
-  font-size: 1.1rem;
-}
-
-.set-label {
-  flex: 1;
-  text-align: center;
-}
-
-.set-label-spacer {
-  /* Matches width of separator + margins in the grid */
-  width: 32px; 
-}
-
-/* Optional: Title Styling (if you want to move the Header styles too) */
 .selector-title-container {
   text-align: center;
-  margin-bottom: 10px; /* Reduced from 20px */
+  margin-bottom: 10px; 
 }
 
 .selector-main-title {
   margin: 0 0 2px 0;
   color: white;
-  font-size: 1.3rem; /* Slightly smaller */
-}
-
-.set-labels-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 2px; /* Tight against the grid */
-  font-weight: bold;
-  color: #ccc;
-  font-size: 1rem; /* Smaller font */
+  font-size: 1.3rem; 
 }
 
 .selector-sub-title {
@@ -711,21 +675,39 @@ form input, form label, form button {
   color: #bbb;
 }
 
+.set-labels-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2px;
+  font-weight: bold;
+  color: #ccc;
+  font-size: 1rem;
+}
+
+.set-label {
+  flex: 1;
+  text-align: center;
+}
+
+.set-label-spacer {
+  width: 32px; 
+}
+
 /* --- Action Button Layout --- */
 .selector-actions {
   display: flex;
   justify-content: center;
-  gap: 10px; /* Space between buttons */
+  gap: 10px; 
   margin-bottom: 20px;
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  flex-wrap: wrap;
 }
 
-/* Base style overrides for action buttons */
 .action-btn {
-  width: auto !important; /* Allow width to fit text */
+  width: auto !important; 
   padding: 10px 20px !important;
   font-size: 16px;
-  margin: 0 !important; /* Managed by gap in flex container */
+  margin: 0 !important; 
   font-weight: bold;
 }
 
@@ -736,7 +718,7 @@ form input, form label, form button {
 }
 .toggle-action:hover {
   background-color: #3658b0;
-  transform: scale(1.05); /* Slight pop effect */
+  transform: scale(1.05); 
 }
 
 /* 2. Save & Close - Green */

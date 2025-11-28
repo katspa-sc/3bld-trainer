@@ -2815,8 +2815,9 @@ let disableInversesMode = localStorage.getItem(getStorageKey("disableInversesMod
 
 document.getElementById("letterSelector").addEventListener("click", function () {
     const selectionGrid = document.getElementById("selectionGrid");
-    selectionGrid.innerHTML = "";
+    selectionGrid.innerHTML = ""; // Clear previous content
 
+    // --- HEADER (Close Button) ---
     const headerDiv = document.createElement("div");
     headerDiv.style.display = "flex";
     headerDiv.style.justifyContent = "flex-end";
@@ -2829,6 +2830,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     headerDiv.appendChild(closeBtn);
     selectionGrid.appendChild(headerDiv);
 
+    // --- TITLE & SUBTITLE ---
     const titleContainer = document.createElement("div");
     titleContainer.className = "selector-title-container";
 
@@ -2840,19 +2842,30 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     subTitle.textContent = "Inverses are separated for easier control";
     subTitle.className = "selector-sub-title";
 
+    // Count Label
+    const countLabel = document.createElement("div");
+    countLabel.id = "set-selector-count";
+    countLabel.style.fontSize = "1.2rem";
+    countLabel.style.fontWeight = "bold";
+    countLabel.style.marginTop = "8px";
+    countLabel.style.color = "#4CAF50"; // Green default
+    countLabel.textContent = "Calculating..."; 
+
     titleContainer.appendChild(mainTitle);
     titleContainer.appendChild(subTitle);
+    titleContainer.appendChild(countLabel);
     selectionGrid.appendChild(titleContainer);
 
+    // --- ACTION BUTTONS ---
     const actionsDiv = document.createElement("div");
     actionsDiv.className = "selector-actions";
 
+    // 1. Toggle All Button
     const toggleBtn = document.createElement("button");
     toggleBtn.textContent = "Toggle All Sets";
     toggleBtn.className = "large-button action-btn toggle-action"; 
     toggleBtn.addEventListener("click", () => {
         const visibleBtns = Array.from(document.querySelectorAll(".set-btn:not(.buffer)"));
-        
         const allAreOn = visibleBtns.every(btn => !btn.classList.contains("untoggled"));
         const newState = !allAreOn; 
         
@@ -2868,8 +2881,10 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         
         saveSelectedSets();
         saveStickerState();
+        updateActiveAlgCount(); // Update count on toggle
     });
 
+    // 2. Save & Close
     const saveCloseBtn = document.createElement("button");
     saveCloseBtn.textContent = "Save & Close";
     saveCloseBtn.className = "large-button action-btn save-close-action";
@@ -2878,13 +2893,14 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         selectionGrid.style.display = "none";
     });
 
+    // 3. Save & Start
     const saveStartBtn = document.createElement("button");
-    saveStartBtn.textContent = "Start Session";
+    saveStartBtn.textContent = "Save & Start Session";
     saveStartBtn.className = "large-button action-btn save-start-action";
     saveStartBtn.addEventListener("click", () => {
         updateUserDefinedAlgs();
         selectionGrid.style.display = "none";
-        initializeSession();
+        initializeSession(); 
     });
 
     actionsDiv.appendChild(toggleBtn);
@@ -2892,25 +2908,23 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     actionsDiv.appendChild(saveStartBtn);
     selectionGrid.appendChild(actionsDiv);
 
+    // --- LABELS ---
     const labelsDiv = document.createElement("div");
     labelsDiv.className = "set-labels-container";
-
     const leftLabel = document.createElement("div");
     leftLabel.className = "set-label";
     leftLabel.textContent = "First target";
-
     const spacer = document.createElement("div");
     spacer.className = "set-label-spacer";
-
     const rightLabel = document.createElement("div");
     rightLabel.className = "set-label";
     rightLabel.textContent = "Second target";
-
     labelsDiv.appendChild(leftLabel);
     labelsDiv.appendChild(spacer);
     labelsDiv.appendChild(rightLabel);
     selectionGrid.appendChild(labelsDiv);
 
+    // --- GENERATE FACE ROWS ---
     const faces = [
         { name: "U", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
         { name: "L", indices: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
@@ -2926,13 +2940,10 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     faces.forEach(face => {
         const rowDiv = document.createElement("div");
         rowDiv.className = "face-row";
-
         const leftGroup = document.createElement("div");
         leftGroup.className = "face-group";
-
         const rightGroup = document.createElement("div");
         rightGroup.className = "face-group";
-
         const faceLetters = new Set();
         
         face.indices.forEach(index => {
@@ -2943,7 +2954,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
 
                     const createBtn = (pos) => {
                         const btn = document.createElement("button");
-                        btn.className = `set-btn face-${face.name}`;
+                        btn.className = `set-btn face-${face.name.toLowerCase()}`;
                         btn.textContent = pos === 'first' ? `${letter}_` : `_${letter}`;
                         btn.dataset.letter = letter;
                         btn.dataset.position = pos;
@@ -2985,17 +2996,16 @@ document.getElementById("letterSelector").addEventListener("click", function () 
 
         if (leftGroup.children.length > 0) {
             rowDiv.appendChild(leftGroup);
-            
             const sep = document.createElement("div");
             sep.className = "face-separator";
             rowDiv.appendChild(sep);
-
             rowDiv.appendChild(rightGroup);
             selectionGrid.appendChild(rowDiv);
         }
     });
 
     selectionGrid.style.display = "block";
+    updateActiveAlgCount(); // Calls the helper immediately on open
 });
 
 function updateUserDefinedAlgs() {
@@ -3241,13 +3251,10 @@ function showPairSelectionGrid(setName) {
 
 document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
-    pairSelectionGrid.style.display = "none"; 
+    pairSelectionGrid.style.display = "none";
 
-    
     saveStickerState();
-    console.log("Updated sticker state:", stickerState);
-
-    
+    updateActiveAlgCount();
     updateUserDefinedAlgs();
 });
 
@@ -3675,29 +3682,37 @@ function getActiveSchemeLetters() {
     return Array.from(letters).sort();
 }
 
+function updateActiveAlgCount() {
+    const statsLabel = document.getElementById("set-selector-count");
+    if (!statsLabel) return;
+
+    const activeCount = fetchedAlgs.filter(alg => stickerState[alg.key] !== false).length;
+    const totalCount = fetchedAlgs.length;
+
+    statsLabel.textContent = `Selected: ${activeCount} / ${totalCount}`;
+    statsLabel.style.color = activeCount === 0 ? "#ff4444" : "#4CAF50";
+}
+
 function handleGridButtonClick(button, letter, position) {
     const setKey = position === 'first' ? `${letter}_` : `_${letter}`;
     const newState = !selectedSets[setKey];
     selectedSets[setKey] = newState;
-    
+
     button.classList.toggle("untoggled", !newState);
     saveSelectedSets();
 
     if (fetchedAlgs.length > 0) {
-        let changedCount = 0;
         fetchedAlgs.forEach(item => {
             const key = item.key;
             if (key.length < 2) return;
             if (position === 'first' && key[0] === letter) {
                 stickerState[key] = newState;
-                changedCount++;
             } else if (position === 'second' && key[1] === letter) {
                 stickerState[key] = newState;
-                changedCount++;
             }
         });
-        
+
         saveStickerState();
-        console.log(`Updated ${setKey}: ${changedCount} algs set to ${newState}`);
     }
+    updateActiveAlgCount();
 }
