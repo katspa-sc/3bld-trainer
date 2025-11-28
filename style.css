@@ -710,3 +710,51 @@ form input, form label, form button {
   font-size: 1rem;
   color: #bbb;
 }
+
+/* --- Action Button Layout --- */
+.selector-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px; /* Space between buttons */
+  margin-bottom: 20px;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+
+/* Base style overrides for action buttons */
+.action-btn {
+  width: auto !important; /* Allow width to fit text */
+  padding: 10px 20px !important;
+  font-size: 16px;
+  margin: 0 !important; /* Managed by gap in flex container */
+  font-weight: bold;
+}
+
+/* 1. Toggle All - Blue */
+.toggle-action {
+  background-color: #4570de; 
+  color: white;
+}
+.toggle-action:hover {
+  background-color: #3658b0;
+  transform: scale(1.05); /* Slight pop effect */
+}
+
+/* 2. Save & Close - Green */
+.save-close-action {
+  background-color: #28a745;
+  color: white;
+}
+.save-close-action:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+}
+
+/* 3. Save & Start Session - Orange */
+.save-start-action {
+  background-color: #ff9800;
+  color: black;
+}
+.save-start-action:hover {
+  background-color: #f57c00;
+  transform: scale(1.05);
+}

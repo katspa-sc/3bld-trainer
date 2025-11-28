@@ -2815,11 +2815,8 @@ let disableInversesMode = localStorage.getItem(getStorageKey("disableInversesMod
 
 document.getElementById("letterSelector").addEventListener("click", function () {
     const selectionGrid = document.getElementById("selectionGrid");
-    
-    
     selectionGrid.innerHTML = "";
 
-    
     const headerDiv = document.createElement("div");
     headerDiv.style.display = "flex";
     headerDiv.style.justifyContent = "flex-end";
@@ -2828,13 +2825,10 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "X";
     closeBtn.className = "close-button close-set"; 
-    closeBtn.style.backgroundColor = "#dc3545"; 
-    closeBtn.style.color = "white";
     closeBtn.addEventListener("click", () => selectionGrid.style.display = "none");
     headerDiv.appendChild(closeBtn);
     selectionGrid.appendChild(headerDiv);
 
-    
     const titleContainer = document.createElement("div");
     titleContainer.className = "selector-title-container";
 
@@ -2850,32 +2844,25 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     titleContainer.appendChild(subTitle);
     selectionGrid.appendChild(titleContainer);
 
-    
     const actionsDiv = document.createElement("div");
-    actionsDiv.style.textAlign = "center";
-    actionsDiv.style.marginBottom = "15px";
+    actionsDiv.className = "selector-actions";
 
-    
     const toggleBtn = document.createElement("button");
     toggleBtn.textContent = "Toggle All Sets";
-    toggleBtn.className = "large-button"; 
-    toggleBtn.style.marginRight = "10px";
+    toggleBtn.className = "large-button action-btn toggle-action"; 
     toggleBtn.addEventListener("click", () => {
-        const allKeys = Object.keys(selectedSets);
-        const anyOn = allKeys.some(k => selectedSets[k]);
-        const newState = !anyOn; 
+        const visibleBtns = Array.from(document.querySelectorAll(".set-btn:not(.buffer)"));
         
+        const allAreOn = visibleBtns.every(btn => !btn.classList.contains("untoggled"));
+        const newState = !allAreOn; 
         
-        document.querySelectorAll(".set-btn").forEach(btn => {
-            if (!btn.disabled) {
-                btn.classList.toggle("untoggled", !newState);
-                const letter = btn.dataset.letter;
-                const pos = btn.dataset.position; 
-                const setKey = pos === 'first' ? `${letter}_` : `_${letter}`;
-                selectedSets[setKey] = newState;
-            }
+        visibleBtns.forEach(btn => {
+            btn.classList.toggle("untoggled", !newState);
+            const letter = btn.dataset.letter;
+            const pos = btn.dataset.position; 
+            const setKey = pos === 'first' ? `${letter}_` : `_${letter}`;
+            selectedSets[setKey] = newState;
         });
-        
         
         fetchedAlgs.forEach(alg => stickerState[alg.key] = newState);
         
@@ -2883,21 +2870,28 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         saveStickerState();
     });
 
-    
-    const applyBtn = document.createElement("button");
-    applyBtn.textContent = "Save & apply";
-    applyBtn.className = "large-button";
-    applyBtn.style.backgroundColor = "#28a745"; 
-    applyBtn.addEventListener("click", () => {
+    const saveCloseBtn = document.createElement("button");
+    saveCloseBtn.textContent = "Save & Close";
+    saveCloseBtn.className = "large-button action-btn save-close-action";
+    saveCloseBtn.addEventListener("click", () => {
         updateUserDefinedAlgs();
         selectionGrid.style.display = "none";
     });
 
+    const saveStartBtn = document.createElement("button");
+    saveStartBtn.textContent = "Start Session";
+    saveStartBtn.className = "large-button action-btn save-start-action";
+    saveStartBtn.addEventListener("click", () => {
+        updateUserDefinedAlgs();
+        selectionGrid.style.display = "none";
+        initializeSession();
+    });
+
     actionsDiv.appendChild(toggleBtn);
-    actionsDiv.appendChild(applyBtn);
+    actionsDiv.appendChild(saveCloseBtn);
+    actionsDiv.appendChild(saveStartBtn);
     selectionGrid.appendChild(actionsDiv);
 
-    
     const labelsDiv = document.createElement("div");
     labelsDiv.className = "set-labels-container";
 
@@ -2917,7 +2911,6 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     labelsDiv.appendChild(rightLabel);
     selectionGrid.appendChild(labelsDiv);
 
-    
     const faces = [
         { name: "U", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
         { name: "L", indices: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
@@ -3106,14 +3099,11 @@ document.getElementById("connectSmartCubeReplica").addEventListener("click", fun
 
 const stickerState = {}; 
 
-
 document.querySelectorAll(".gridButton").forEach(button => {
     const setName = button.dataset.letter; 
 
     button.addEventListener("contextmenu", function (event) {
         event.preventDefault(); 
-
-        
         showPairSelectionGrid(setName);
     });
 
@@ -3122,11 +3112,9 @@ document.querySelectorAll(".gridButton").forEach(button => {
         let timeout = setTimeout(() => {
             showPairSelectionGrid(setName);
         }, 500); 
-
         button.addEventListener("touchend", () => clearTimeout(timeout), { once: true });
     });
 });
-
 
 function showPairSelectionGrid(setName) {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
@@ -3250,7 +3238,6 @@ function showPairSelectionGrid(setName) {
     
     pairSelectionGrid.style.display = "block";
 }
-
 
 document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
