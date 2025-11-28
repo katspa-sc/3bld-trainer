@@ -1,6 +1,9 @@
 const CORNER_FACELET_INDICES = [0, 2, 6, 8, 9, 11, 15, 17, 18, 20, 24, 26, 27, 29, 33, 35, 36, 38, 42, 44, 45, 47, 51, 53];
 const EDGE_FACELET_INDICES = [1, 3, 5, 7, 10, 12, 14, 16, 19, 21, 23, 25, 28, 30, 32, 34, 37, 39, 41, 43, 46, 48, 50, 52];
 
+let cachedEdgeLetterToIndex = {};
+let cachedCornerLetterToIndex = {};
+
 let previousScramble = "";
 let previousCycle = "";
 let sessionQueue = [];
@@ -3234,27 +3237,36 @@ function determineCycleType() {
 }
 
 function getPieceNotation(cycleLetters) {
-    const cycleType = determineCycleType(); 
+    const cycleType = determineCycleType();
     if (!cycleType) {
         alert("Invalid cycle type. Please check the page.");
         return null;
     }
 
-    const buffer = cycleType === "edge" ? "UF" : "UFR"; 
-    const pieceMap = cycleType === "edge" ? EDGE_PIECE_MAP : CORNER_PIECE_MAP; 
+    const buffer = cycleType === "edge" ? "UF" : "UFR";
 
-    
-    const pieces = cycleLetters.split("").map(letter => pieceMap[letter]);
+    const lookupCache = cycleType === "edge" ? cachedEdgeLetterToIndex : cachedCornerLetterToIndex;
+    const notationMap = cycleType === "edge" ? EDGE_PIECE_MAP : CORNER_PIECE_MAP;
+
+    const pieces = cycleLetters.split("").map(customLetter => {
+        const index = lookupCache[customLetter];
+
+        if (index === undefined) {
+            console.warn(`Letter '${customLetter}' not found in current ${cycleType} scheme.`);
+            return undefined;
+        }
+
+        const standardLetter = DEFAULT_POSITION_TO_LETTER_MAP[index];
+
+        return notationMap[standardLetter];
+    });
 
     if (pieces.includes(undefined)) {
-        console.warn("Missing mapping for one or more letters:", cycleLetters);
-        return null; 
+        return null;
     }
 
-    
     return [buffer, ...pieces].join(" ");
 }
-
 document.getElementById("cycle").addEventListener("click", function () {
     const cycleLetters = this.textContent.trim(); 
     const pieceNotation = getPieceNotation(cycleLetters); 
@@ -3265,7 +3277,6 @@ document.getElementById("cycle").addEventListener("click", function () {
     }
 
     const formattedData = `?how ${pieceNotation}`;
-
     
     navigator.clipboard.writeText(formattedData).then(() => {
         console.log("Piece notation copied to clipboard:", pieceNotation);
@@ -3482,6 +3493,8 @@ if (saveSchemeButton) {
     saveSchemeButton.addEventListener("click", function () {
         const schemeMap = applySchemeFromGrid();
 
+        updateLetterSchemeCache();
+
         try {
             localStorage.setItem("customLetterSchemeJSON", JSON.stringify(schemeMap));
             alert("Custom letter scheme saved!");
@@ -3498,6 +3511,7 @@ if (speffzSchemeButton) {
         if (confirm("Load standard Speffz scheme?")) {
             Object.assign(POSITION_TO_LETTER_MAP, SPEFFZ_LETTER_MAP);
             populateGridFromScheme(SPEFFZ_LETTER_MAP);
+            updateLetterSchemeCache();
             localStorage.setItem("customLetterSchemeJSON", JSON.stringify(SPEFFZ_LETTER_MAP));
         }
     });
@@ -3509,6 +3523,7 @@ if (hanusSchemeButton) {
         if (confirm("Load gigachad Hanuś scheme?")) {
             Object.assign(POSITION_TO_LETTER_MAP, HANUS_LETTER_MAP);
             populateGridFromScheme(HANUS_LETTER_MAP);
+            updateLetterSchemeCache();
             localStorage.setItem("customLetterSchemeJSON", JSON.stringify(HANUS_LETTER_MAP));
         }
     });
@@ -3521,8 +3536,7 @@ if (kacperSchemeButton) {
             localStorage.removeItem("customLetterSchemeJSON");
             Object.assign(POSITION_TO_LETTER_MAP, DEFAULT_POSITION_TO_LETTER_MAP);
             populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
-
-            alert("Set to Kacper's scheme.");
+            updateLetterSchemeCache(); 
         }
     });
 }
@@ -3548,6 +3562,8 @@ document.addEventListener("DOMContentLoaded", function () {
         
         populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
     }
+
+    updateLetterSchemeCache();
 });
 
 function getActiveSchemeLetters() {
@@ -3602,4 +3618,29 @@ function handleGridButtonClick(button, letter, position, index) {
         saveStickerState();
     }
     updateActiveAlgCount();
+}
+
+function updateLetterSchemeCache() {
+    cachedEdgeLetterToIndex = {};
+    cachedCornerLetterToIndex = {};
+
+    // Valid indices defined in your original code
+    const validCornerIndices = new Set(CORNER_FACELET_INDICES);
+    const validEdgeIndices = new Set(EDGE_FACELET_INDICES);
+
+    for (let i = 0; i < 54; i++) {
+        const letter = POSITION_TO_LETTER_MAP[i];
+        
+        // Ensure we have a valid letter
+        if (letter && typeof letter === 'string' && letter !== "-" && letter.trim() !== "") {
+            const cleanLetter = letter.trim();
+
+            if (validCornerIndices.has(i)) {
+                cachedCornerLetterToIndex[cleanLetter] = i;
+            } else if (validEdgeIndices.has(i)) {
+                cachedEdgeLetterToIndex[cleanLetter] = i;
+            }
+        }
+    }
+    console.log("Letter scheme cache updated.");
 }
