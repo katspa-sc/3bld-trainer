@@ -42,14 +42,10 @@
             </div>
 
     
-            <!-- Hidden grid for letter selection (Populated by JavaScript) -->
             <div id="selectionGrid" class="selection-grid" style="display: none;">
 
             </div>
 
-  
-
-            <!-- Hidden grid for toggling individual pairs -->
             <div id="pairSelectionGrid" class="selection-grid" style="display: none;">
                 <h3 id="pairSelectionTitle" style="color: white; text-align: center;">Select Pairs for Letter</h3>
                 <div class="pair-grid-container">
@@ -61,10 +57,6 @@
                     Selection</button>
             </div>
 
-            <div id="missingCommsLabel" style="margin-top: 10px; font-size: 16px;"> Selected sets: </div>
-            <br></br>
-
-            <!-- <input id="userDefined" type="checkbox">Use user defined algset <button id="addSelected">Add currently selected algs</button><br> -->
             <textarea id="userDefinedAlgs" cols=50 rows=20
                 placeholder="Place one alg per line. Lines starting with # will be ignored"></textarea>
             <button id="clearUserAlgsButton">Clear algs</button>
@@ -79,44 +71,37 @@
                     Fill in your lettering scheme. Centers are fixed reference points.
                 </div>
             
-                <!-- The Visual Cube Net -->
                 <div class="cube-net-container" id="cubeNetInputs">
-                    <!-- U Face (Indices 0-8) -->
                     <div class="face-grid face-u">
                         <input class="sticker-input" data-index="0"><input class="sticker-input" data-index="1"><input class="sticker-input" data-index="2">
                         <input class="sticker-input" data-index="3"><input class="sticker-input" data-index="4" value="U" disabled><input class="sticker-input" data-index="5">
                         <input class="sticker-input" data-index="6"><input class="sticker-input" data-index="7"><input class="sticker-input" data-index="8">
                     </div>
-            
-                    <!-- L Face (Indices 36-44) -->
+
                     <div class="face-grid face-l">
                         <input class="sticker-input" data-index="36"><input class="sticker-input" data-index="37"><input class="sticker-input" data-index="38">
                         <input class="sticker-input" data-index="39"><input class="sticker-input" data-index="40" value="L" disabled><input class="sticker-input" data-index="41">
                         <input class="sticker-input" data-index="42"><input class="sticker-input" data-index="43"><input class="sticker-input" data-index="44">
                     </div>
-            
-                    <!-- F Face (Indices 18-26) -->
+
                     <div class="face-grid face-f">
                         <input class="sticker-input" data-index="18"><input class="sticker-input" data-index="19"><input class="sticker-input" data-index="20">
                         <input class="sticker-input" data-index="21"><input class="sticker-input" data-index="22" value="F" disabled><input class="sticker-input" data-index="23">
                         <input class="sticker-input" data-index="24"><input class="sticker-input" data-index="25"><input class="sticker-input" data-index="26">
                     </div>
-            
-                    <!-- R Face (Indices 9-17) -->
+
                     <div class="face-grid face-r">
                         <input class="sticker-input" data-index="9"><input class="sticker-input" data-index="10"><input class="sticker-input" data-index="11">
                         <input class="sticker-input" data-index="12"><input class="sticker-input" data-index="13" value="R" disabled><input class="sticker-input" data-index="14">
                         <input class="sticker-input" data-index="15"><input class="sticker-input" data-index="16"><input class="sticker-input" data-index="17">
                     </div>
-            
-                    <!-- B Face (Indices 45-53) -->
+
                     <div class="face-grid face-b">
                         <input class="sticker-input" data-index="45"><input class="sticker-input" data-index="46"><input class="sticker-input" data-index="47">
                         <input class="sticker-input" data-index="48"><input class="sticker-input" data-index="49" value="B" disabled><input class="sticker-input" data-index="50">
                         <input class="sticker-input" data-index="51"><input class="sticker-input" data-index="52"><input class="sticker-input" data-index="53">
                     </div>
-            
-                    <!-- D Face (Indices 27-35) -->
+
                     <div class="face-grid face-d">
                         <input class="sticker-input" data-index="27"><input class="sticker-input" data-index="28"><input class="sticker-input" data-index="29">
                         <input class="sticker-input" data-index="30"><input class="sticker-input" data-index="31" value="D" disabled><input class="sticker-input" data-index="32">
@@ -131,7 +116,7 @@
                     <button id="kacperLetterScheme">Kacper scheme</button>
                     <button id="hanusLetterScheme">Hanuś scheme</button>
                 </div>
-                
+
             </div>
             
             <div class="hidden">

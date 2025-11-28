@@ -10,7 +10,6 @@ body {
   transition: background-color 0.4s ease-in-out;
 }
 
-/* Success Flash State */
 body.solve-success-flash {
   background-color: #0b4300;
 }
@@ -73,8 +72,6 @@ p.cycle {
   letter-spacing: normal;
 }
 
-/* --- Feedback & Control Buttons --- */
-
 #feedbackButtons {
   text-align: center;
   margin-top: 20px;
@@ -115,7 +112,6 @@ p.cycle {
 .large-button:hover { background-color: #3658b0; }
 .large-button:active { background-color: #2a4a8a; transform: scale(0.95); }
 
-/* Specific Button Colors (Main Menu) */
 .fetch-algs-button { background-color: #9C27B0; color: black; }
 .fetch-algs-button:hover { background-color: #7B1FA2; }
 .fetch-algs-button:active { background-color: #6A1B9A; }
@@ -147,8 +143,6 @@ p.cycle {
   background-color: #00000000 !important;
 }
 
-/* --- Layout Columns --- */
-
 .column-placeholder { width: 30%; float: left; }
 
 .column_left {
@@ -171,8 +165,6 @@ p.cycle {
   width: 30%;
 }
 
-/* --- Selection Grid (Set Selector) --- */
-
 .selection-grid {
   display: none;
   position: fixed;
@@ -191,7 +183,6 @@ p.cycle {
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-/* Face Rows */
 .face-row {
   display: flex;
   justify-content: center;
@@ -216,7 +207,6 @@ p.cycle {
   margin: 0 12px;    
 }
 
-/* Set Selector Buttons */
 .set-btn {
   width: 48px;       
   height: 48px;      
@@ -227,7 +217,7 @@ p.cycle {
   border-radius: 6px;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.1s;
-  color: inherit;
+  color: inherit; 
 }
 
 .set-btn.untoggled {
@@ -244,42 +234,6 @@ p.cycle {
   color: #555 !important;
   border: 1px dashed #444;
   cursor: default;
-}
-
-.set-btn.face-u, 
-.face-u .sticker-input { 
-    background-color: #ffffff; 
-    color: #000000; 
-}
-
-.set-btn.face-l, 
-.face-l .sticker-input { 
-    background-color: #ffaa00; 
-    color: #000000; 
-}
-
-.set-btn.face-f, 
-.face-f .sticker-input { 
-    background-color: #00dd00; 
-    color: #000000; 
-}
-
-.set-btn.face-r, 
-.face-r .sticker-input { 
-    background-color: #ff0000; 
-    color: #000000; 
-}
-
-.set-btn.face-b, 
-.face-b .sticker-input { 
-    background-color: #0000ff; 
-    color: #cfcfcf;
-}
-
-.set-btn.face-d, 
-.face-d .sticker-input { 
-    background-color: #ffff00; 
-    color: #000000; 
 }
 
 #pairSelectionGrid {
@@ -330,7 +284,6 @@ p.cycle {
   background-color: white;
 }
 
-/* Individual Pair Buttons */
 .pairButton {
   width: 50px;
   height: 50px;
@@ -363,7 +316,6 @@ p.cycle {
 }
 #applyPairSelectionButton:hover { background-color: #0288D1; }
 
-/* Pair Button Colors */
 .sticker-white { background-color: #ffffff; color: #000000; }
 .sticker-yellow { background-color: #ffd500; color: #000000; }
 .sticker-red { background-color: #dc0000; color: #ffffff; }
@@ -371,8 +323,6 @@ p.cycle {
 .sticker-green { background-color: #009e60; color: #ffffff; }
 .sticker-blue { background-color: #0051ba; color: #ffffff; }
 .sticker-grey { background-color: #888888; color: #ffffff; }
-
-/* --- Cube Net / Custom Scheme --- */
 
 .cube-net-container {
   display: grid;
@@ -412,12 +362,41 @@ p.cycle {
   text-transform: uppercase;
 }
 
-.face-u .sticker-input { background-color: #ffffff; }
-.face-l .sticker-input { background-color: #ffaa00; }
-.face-f .sticker-input { background-color: #00dd00; }
-.face-r .sticker-input { background-color: #ff0000; color: white; }
-.face-b .sticker-input { background-color: #0000ff; color: white; }
-.face-d .sticker-input { background-color: #ffff00; }
+.set-btn.face-u, 
+.face-u .sticker-input { 
+    background-color: #ffffff; 
+    color: #000000; 
+}
+
+.set-btn.face-l, 
+.face-l .sticker-input { 
+    background-color: #ffaa00; 
+    color: #000000; 
+}
+
+.set-btn.face-f, 
+.face-f .sticker-input { 
+    background-color: #00dd00; 
+    color: #000000; 
+}
+
+.set-btn.face-r, 
+.face-r .sticker-input { 
+    background-color: #ff0000; 
+    color: #000000; 
+}
+
+.set-btn.face-b, 
+.face-b .sticker-input { 
+    background-color: #0000ff; 
+    color: #cfcfcf; 
+}
+
+.set-btn.face-d, 
+.face-d .sticker-input { 
+    background-color: #ffff00; 
+    color: #000000; 
+}
 
 .sticker-input:disabled {
   background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1));
@@ -425,8 +404,6 @@ p.cycle {
   color: #555;
   font-size: 10px;
 }
-
-/* --- Misc & Utilities --- */
 
 div.hidden { display: none; }
 
@@ -557,7 +534,6 @@ form input, form label, form button {
 }
 .reset-button:hover { background-color: #FF0000; }
 
-/* Toggles */
 .mode-toggle { display: inline-block; margin: 10px; }
 
 .toggle-container, .toggle-container-drilling {
@@ -628,7 +604,7 @@ form input, form label, form button {
   padding: 5px 10px;
   border-radius: 5px;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  z-index: 50;
 }
 
 .upcoming-cycle {
@@ -646,17 +622,17 @@ form input, form label, form button {
       width: 100%; height: 100%;
       transform: none;
       border-radius: 0;
+      z-index: 101;
   }
-  
+
   .selection-grid {
       width: 100%;
       top: 0;
       max-height: 100vh;
       border-radius: 0;
+      z-index: 100;
   }
 }
-
-/* --- Set Selector Headers & Labels --- */
 
 .selector-title-container {
   text-align: center;
@@ -694,24 +670,35 @@ form input, form label, form button {
   width: 32px; 
 }
 
-/* --- Action Button Layout --- */
 .selector-actions {
   display: flex;
-  justify-content: center;
-  gap: 10px; 
+  justify-content: space-between; 
+  gap: 12px; 
   margin-bottom: 20px;
-  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .action-btn {
-  width: auto !important; 
-  padding: 10px 20px !important;
-  font-size: 16px;
+  flex: 1; 
+  width: 0; 
+  padding: 12px 0 !important; 
+  font-size: 20px;
   margin: 0 !important; 
   font-weight: bold;
+  white-space: nowrap;
 }
 
-/* 1. Toggle All - Blue */
+@media (max-width: 600px) {
+  .selector-actions {
+    flex-direction: column;
+  }
+  .action-btn {
+    width: 100% !important; 
+    flex: none;
+  }
+}
+
 .toggle-action {
   background-color: #4570de; 
   color: white;
@@ -721,7 +708,6 @@ form input, form label, form button {
   transform: scale(1.05); 
 }
 
-/* 2. Save & Close - Green */
 .save-close-action {
   background-color: #28a745;
   color: white;
@@ -731,7 +717,6 @@ form input, form label, form button {
   transform: scale(1.05);
 }
 
-/* 3. Save & Start Session - Orange */
 .save-start-action {
   background-color: #ff9800;
   color: black;

@@ -2815,9 +2815,8 @@ let disableInversesMode = localStorage.getItem(getStorageKey("disableInversesMod
 
 document.getElementById("letterSelector").addEventListener("click", function () {
     const selectionGrid = document.getElementById("selectionGrid");
-    selectionGrid.innerHTML = ""; // Clear previous content
+    selectionGrid.innerHTML = "";
 
-    // --- HEADER (Close Button) ---
     const headerDiv = document.createElement("div");
     headerDiv.style.display = "flex";
     headerDiv.style.justifyContent = "flex-end";
@@ -2830,7 +2829,6 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     headerDiv.appendChild(closeBtn);
     selectionGrid.appendChild(headerDiv);
 
-    // --- TITLE & SUBTITLE ---
     const titleContainer = document.createElement("div");
     titleContainer.className = "selector-title-container";
 
@@ -2842,13 +2840,12 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     subTitle.textContent = "Inverses are separated for easier control";
     subTitle.className = "selector-sub-title";
 
-    // Count Label
     const countLabel = document.createElement("div");
     countLabel.id = "set-selector-count";
     countLabel.style.fontSize = "1.2rem";
     countLabel.style.fontWeight = "bold";
     countLabel.style.marginTop = "8px";
-    countLabel.style.color = "#4CAF50"; // Green default
+    countLabel.style.color = "#4CAF50"; 
     countLabel.textContent = "Calculating..."; 
 
     titleContainer.appendChild(mainTitle);
@@ -2856,13 +2853,11 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     titleContainer.appendChild(countLabel);
     selectionGrid.appendChild(titleContainer);
 
-    // --- ACTION BUTTONS ---
     const actionsDiv = document.createElement("div");
     actionsDiv.className = "selector-actions";
 
-    // 1. Toggle All Button
     const toggleBtn = document.createElement("button");
-    toggleBtn.textContent = "Toggle All Sets";
+    toggleBtn.textContent = "Toggle all sets";
     toggleBtn.className = "large-button action-btn toggle-action"; 
     toggleBtn.addEventListener("click", () => {
         const visibleBtns = Array.from(document.querySelectorAll(".set-btn:not(.buffer)"));
@@ -2881,21 +2876,19 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         
         saveSelectedSets();
         saveStickerState();
-        updateActiveAlgCount(); // Update count on toggle
+        updateActiveAlgCount(); 
     });
 
-    // 2. Save & Close
     const saveCloseBtn = document.createElement("button");
-    saveCloseBtn.textContent = "Save & Close";
+    saveCloseBtn.textContent = "Save & close";
     saveCloseBtn.className = "large-button action-btn save-close-action";
     saveCloseBtn.addEventListener("click", () => {
         updateUserDefinedAlgs();
         selectionGrid.style.display = "none";
     });
 
-    // 3. Save & Start
     const saveStartBtn = document.createElement("button");
-    saveStartBtn.textContent = "Save & Start Session";
+    saveStartBtn.textContent = "Save & start session";
     saveStartBtn.className = "large-button action-btn save-start-action";
     saveStartBtn.addEventListener("click", () => {
         updateUserDefinedAlgs();
@@ -2908,7 +2901,6 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     actionsDiv.appendChild(saveStartBtn);
     selectionGrid.appendChild(actionsDiv);
 
-    // --- LABELS ---
     const labelsDiv = document.createElement("div");
     labelsDiv.className = "set-labels-container";
     const leftLabel = document.createElement("div");
@@ -2924,7 +2916,6 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     labelsDiv.appendChild(rightLabel);
     selectionGrid.appendChild(labelsDiv);
 
-    // --- GENERATE FACE ROWS ---
     const faces = [
         { name: "U", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
         { name: "L", indices: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
@@ -2944,7 +2935,10 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         leftGroup.className = "face-group";
         const rightGroup = document.createElement("div");
         rightGroup.className = "face-group";
+        
         const faceLetters = new Set();
+        const rowLeftBtns = [];
+        const rowRightBtns = [];
         
         face.indices.forEach(index => {
             if (validIndices.has(index)) {
@@ -2952,8 +2946,10 @@ document.getElementById("letterSelector").addEventListener("click", function () 
                 if (letter && letter.trim() !== "" && letter !== "-" && !faceLetters.has(letter)) {
                     faceLetters.add(letter);
 
+                    // Function to create button
                     const createBtn = (pos) => {
                         const btn = document.createElement("button");
+                        // Use lowercase face name to match CSS
                         btn.className = `set-btn face-${face.name.toLowerCase()}`;
                         btn.textContent = pos === 'first' ? `${letter}_` : `_${letter}`;
                         btn.dataset.letter = letter;
@@ -2988,11 +2984,25 @@ document.getElementById("letterSelector").addEventListener("click", function () 
                         return btn;
                     };
 
-                    leftGroup.appendChild(createBtn('first'));
-                    rightGroup.appendChild(createBtn('second'));
+                    // Collect buttons for this letter
+                    rowLeftBtns.push(createBtn('first'));
+                    rowRightBtns.push(createBtn('second'));
                 }
             }
         });
+
+        // SWAP LOGIC: Swap the last two buttons in the row (e.g., A B C D -> A B D C)
+        if (rowLeftBtns.length >= 2) {
+            const len = rowLeftBtns.length;
+            // Swap left group
+            [rowLeftBtns[len - 1], rowLeftBtns[len - 2]] = [rowLeftBtns[len - 2], rowLeftBtns[len - 1]];
+            // Swap right group
+            [rowRightBtns[len - 1], rowRightBtns[len - 2]] = [rowRightBtns[len - 2], rowRightBtns[len - 1]];
+        }
+
+        // Append buttons to groups
+        rowLeftBtns.forEach(btn => leftGroup.appendChild(btn));
+        rowRightBtns.forEach(btn => rightGroup.appendChild(btn));
 
         if (leftGroup.children.length > 0) {
             rowDiv.appendChild(leftGroup);
@@ -3005,7 +3015,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     });
 
     selectionGrid.style.display = "block";
-    updateActiveAlgCount(); // Calls the helper immediately on open
+    updateActiveAlgCount(); 
 });
 
 function updateUserDefinedAlgs() {
@@ -3079,18 +3089,6 @@ const EXCLUDED_DUOS_EDGES = [
     ["U", "Y"], 
 ];
 
-function findMissingCombinations(selectedLetter, algs) {
-    const allCombinations = ALL_LETTERS.map(letter => `${selectedLetter}${letter}`)
-        .concat(ALL_LETTERS.map(letter => `${letter}${selectedLetter}`)) 
-        .filter(combination => combination[0] !== combination[1]) 
-        .filter(combination => !isExcludedCombination(combination)); 
-
-    const existingCombinations = algs.map(pair => pair.key);
-    const missingCombinations = allCombinations.filter(combination => !existingCombinations.includes(combination));
-
-    return missingCombinations;
-}
-
 function isExcludedCombination(combination) {
     const currentExclusions = determineCycleType() === "corner" ? EXCLUDED_TRIOS_CORNERS : EXCLUDED_DUOS_EDGES;
 
@@ -3131,18 +3129,14 @@ function showPairSelectionGrid(setName) {
     const leftPairGrid = document.getElementById("leftPairGrid");
     const rightPairGrid = document.getElementById("rightPairGrid");
     const pairSelectionTitle = document.getElementById("pairSelectionTitle");
-
     
     pairSelectionTitle.textContent = `Select Pairs for Letter ${setName}`;
-
     
     leftPairGrid.innerHTML = "";
     rightPairGrid.innerHTML = "";
-
     
     const activeLetters = getActiveSchemeLetters(); 
 
-    
     const pairs = activeLetters.map(letter => `${setName}${letter}`)
         .concat(activeLetters.map(letter => `${letter}${setName}`)) 
         .filter(pair => pair[0] !== pair[1]) 
