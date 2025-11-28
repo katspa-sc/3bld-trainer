@@ -1,4 +1,3 @@
-// Indices for standard facelet order (U R F D L B)
 const CORNER_FACELET_INDICES = [0, 2, 6, 8, 9, 11, 15, 17, 18, 20, 24, 26, 27, 29, 33, 35, 36, 38, 42, 44, 45, 47, 51, 53];
 const EDGE_FACELET_INDICES = [1, 3, 5, 7, 10, 12, 14, 16, 19, 21, 23, 25, 28, 30, 32, 34, 37, 39, 41, 43, 46, 48, 50, 52];
 
@@ -8,31 +7,27 @@ let sessionQueue = [];
 let upcomingAlgTest = null;
 
 function tryNotify() {
-    const options = isHypeMode ? hypeDrillOptions : regularDrillOptions; // Use hype or regular options
+    const options = isHypeMode ? hypeDrillOptions : regularDrillOptions;
     const text = options[Math.floor(Math.random() * options.length)];
-    const rate = isHypeMode ? 1.3 : 1.5; // Faster rate for hype mode
+    const rate = isHypeMode ? 1.3 : 1.5;
     speakText(text, rate, false, isHypeMode);
 }
 
 function getStorageKey(baseKey) {
-    return `${currentMode}_${baseKey}`; // Prefix the key with the current mode (e.g., "corner_fetchedAlgs")
+    return `${currentMode}_${baseKey}`;
 }
 
 var PROXY_URL = "";
 
 const hypeModeCheckbox = document.getElementById("hypeModeCheckbox");
 
-// Default to "false" if no mode is saved in localStorage
 const savedHypeMode = localStorage.getItem("hypeMode") === "true";
 let isHypeMode = savedHypeMode;
 
-// Set the initial state of the checkbox
 hypeModeCheckbox.checked = isHypeMode;
-
-// Add an event listener to handle checkbox changes
 hypeModeCheckbox.addEventListener("change", function () {
-    isHypeMode = this.checked; // Update the mode
-    localStorage.setItem("hypeMode", isHypeMode); // Save the mode to localStorage
+    isHypeMode = this.checked;
+    localStorage.setItem("hypeMode", isHypeMode);
 
     console.log(`Hype Mode switched to: ${isHypeMode ? "enabled" : "disabled"}`);
 });
@@ -42,28 +37,25 @@ let currentDrillingPair = null;
 let isSecondInPair = false;
 let totalDrillPairs = 0;
 
-let isFirstDrillRun = true;  // To fix the initial jingle problem
-let shouldReadDrillTTS = true; // To control TTS readouts during drills
+let isFirstDrillRun = true;  
+let shouldReadDrillTTS = true; 
 
 function initializeDrillingPairs(algsFromTextarea) {
     console.log("Initializing drilling session from textbox content...");
     
-    // Create a map of the *full* alg set (comm -> key) to find inverses.
     const fullAlgMap = new Map(fetchedAlgs.map(item => [item.value.trim(), item.key.trim()]));
     
-    // Create a map of (key -> inverseKey) for quick lookup
     const inverseKeyMap = new Map();
     fetchedAlgs.forEach(item => {
         const inverseKey = item.key[1] + item.key[0];
         inverseKeyMap.set(item.key, inverseKey);
     });
 
-    // Create a map of (key -> comm) to find the inverse commutator
     const keyToCommMap = new Map(fetchedAlgs.map(item => [item.key.trim(), item.value.trim()]));
 
     const processed = new Set();
     drillingPairs = [];
-    const missingPairs = []; // Track commutators missing their inverse
+    const missingPairs = []; 
 
     for (const alg of algsFromTextarea) {
         const trimmedAlg = alg.trim();
@@ -72,19 +64,19 @@ function initializeDrillingPairs(algsFromTextarea) {
         }
 
         const key = fullAlgMap.get(trimmedAlg);
-        if (!key) continue; // Alg not found in master list, skip it.
+        if (!key) continue; 
 
         const inverseKey = inverseKeyMap.get(key);
         const inverseAlg = keyToCommMap.get(inverseKey);
         
-        // Check if the inverse alg is also present in the user's provided list
+        
         if (inverseAlg && algsFromTextarea.map(a => a.trim()).includes(inverseAlg.trim())) {
             drillingPairs.push([trimmedAlg, inverseAlg]);
             processed.add(trimmedAlg);
             processed.add(inverseAlg.trim());
         } else {
-            // If the inverse is missing, add to the missingPairs list
-            missingPairs.push(`${trimmedAlg} (${key})`); // Display the commutator and its associated letters
+            
+            missingPairs.push(`${trimmedAlg} (${key})`); 
         }
     }
 
@@ -93,7 +85,6 @@ function initializeDrillingPairs(algsFromTextarea) {
         return;
     }
 
-    // Shuffle the pairs
     for (let i = drillingPairs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [drillingPairs[i], drillingPairs[j]] = [drillingPairs[j], drillingPairs[i]];
@@ -104,7 +95,6 @@ function initializeDrillingPairs(algsFromTextarea) {
     isSecondInPair = false;
     shouldReadDrillTTS = true;
 
-    // Inform the user about missing pairs
     if (missingPairs.length > 0) {
         alert(`The following commutators were valid but had no corresponding inverse:\n${missingPairs.join("\n")}`);
         console.log("Missing pairs:", missingPairs);
@@ -112,8 +102,8 @@ function initializeDrillingPairs(algsFromTextarea) {
 }
 
 function initializeSession() {
-    sessionQueue = []; // Clear the queue at the start of a new session
-    upcomingAlgTest = null; // Clear any stored upcoming test
+    sessionQueue = [];
+    upcomingAlgTest = null;
 
     if (isDrillingMode) {
         const boxAlgs = document.getElementById("userDefinedAlgs").value;
@@ -124,17 +114,16 @@ function initializeSession() {
             return;
         }
 
-        initializeDrillingPairs(cleanedAlgs); // This populates the global `drillingPairs` array
-        sessionQueue = drillingPairs.flat(); // Flatten the pairs into a single, ordered queue
+        initializeDrillingPairs(cleanedAlgs);
+        sessionQueue = drillingPairs.flat();
         isFirstDrillRun = true;
     } else {
         const algList = createAlgList();
-        // Shuffle the list of algorithms to create a random, but sequential, order
         for (let i = algList.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [algList[i], algList[j]] = [algList[j], algList[i]];
         }
-        sessionQueue = algList; // This is now our session's queue
+        sessionQueue = algList;
         isFirstRun = true;
     }
 
@@ -147,91 +136,76 @@ function initializeSession() {
     console.log("Session initialized. Starting a new practice session.");
 }
 
-// The "Start Session" button listener
 document.getElementById("resetSessionButton").addEventListener("click", function () {
  initializeSession();
 });
 
-// This function will be called on a successful solve in drilling mode
 function retryDrill() {
     const lastTest = algorithmHistory[algorithmHistory.length - 1];
     if (!lastTest) return;
 
-    // Reset the cube to the same scramble
     cube.resetCube();
     doAlg(lastTest.scramble, false);
     updateVirtualCube();
 
-    // Reset the timer
     document.getElementById("timer").innerHTML = "0.00";
-
     tryNotify();
 
-    // Disable TTS for the next automatic scramble generation
+    
     shouldReadDrillTTS = false;
 
     console.log("Drilling same algorithm:", lastTest.rawAlgs[0]);
     startTimer();
 }
 
-// This function will be called by the L4 gesture
 function advanceDrill() {
     if (!isDrillingMode) return;
 
     console.log("L4 gesture: Advancing to next drill case...");
-    stopTimer(false); // Stop any active timer
+    stopTimer(false);
 
-    // Enable TTS for the *new* algorithm that's about to be generated
     shouldReadDrillTTS = true;
-
-    // Get the next algorithm in the sequence
     nextScramble();
 }
 
 const modeToggle = document.getElementById("modeToggle");
 const modeToggleLabel = document.getElementById("modeToggleLabel");
 
-// Default to "Corner" mode if no mode is saved in localStorage
+
 const savedMode = localStorage.getItem("mode") || "corner";
 let currentMode = savedMode;
 
-// Set the initial state of the toggle and label
 modeToggle.checked = currentMode === "edge";
 modeToggleLabel.textContent = currentMode === "edge" ? "Edge" : "Corner";
 
-// Add an event listener to handle toggle changes
 modeToggle.addEventListener("change", function () {
-    currentMode = this.checked ? "edge" : "corner"; // Update the mode
-    localStorage.setItem("mode", currentMode); // Save the mode to localStorage
-    modeToggleLabel.textContent = currentMode === "edge" ? "Edge" : "Corner"; // Update the label text
-    updateProxyUrl(); // Update the URL for fetching algorithms
+    currentMode = this.checked ? "edge" : "corner"; 
+    localStorage.setItem("mode", currentMode); 
+    modeToggleLabel.textContent = currentMode === "edge" ? "Edge" : "Corner"; 
+    updateProxyUrl(); 
 
-    // Load data for the selected mode
     loadFetchedAlgs();
     loadSelectedSets();
     loadStickerState();
 
-    // Update the userDefinedAlgs textbox based on the loaded data
     updateUserDefinedAlgs();
 
     console.log(`Mode switched to: ${currentMode}`);
 });
 
-// Update the PROXY_URL based on the current mode
+
 function updateProxyUrl() {
     if (currentMode === "corner") {
         PROXY_URL = 'https://commexportproxy.vercel.app/api/algs?sheet=corners';
     } else if (currentMode === "edge") {
         PROXY_URL = 'https://commexportproxy.vercel.app/api/algs?sheet=edges';
     }
-  //  console.log(`PROXY_URL updated to: ${PROXY_URL}`);
 }
 
-// Call this function on page load to set the initial URL
 updateProxyUrl();
 
 const moveHistory = [];
-const MAX_HISTORY_LENGTH = 10; // Limit the history to the last 10 moves
+const MAX_HISTORY_LENGTH = 10; 
 
 var currentRotation = "";
 var currentAlgorithm = ""; //After an alg gets tested for the first time, it becomes the currentAlgorithm.
@@ -250,9 +224,9 @@ var shouldRecalculateStatistics = true;
 
 let utterance = null;
 let selectedVoice = null;
-let toggleFeedbackUsed = false; // Flag to track if the button has been used
+let toggleFeedbackUsed = false; 
 
-// Load available voices and select a specific one
+
 function loadVoices() {
     var voices = window.speechSynthesis.getVoices();
     var filteredVoices = voices.filter(voice => voice.lang.startsWith('pl'));
@@ -264,10 +238,10 @@ let repetitionCounter = parseInt(localStorage.getItem("repetitionCounter")) || 0
 document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
 
 if (localStorage.getItem("enableTTS") === null) {
-    localStorage.setItem("enableTTS", "true"); // Default to enabled
+    localStorage.setItem("enableTTS", "true"); 
 }
 
-// Ensure voices are loaded (some browsers load them asynchronously)
+
 if (typeof speechSynthesis !== "undefined" && speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = loadVoices;
 } else {
@@ -324,7 +298,7 @@ function handleOrientation() {
     updateVirtualCube();
 }
 
-// find a non-center sticker that does not move for the entire alg
+
 function findPivot(alg) {
     let cube = new RubiksCube();
     let moves = alg.split(" ");
@@ -335,13 +309,13 @@ function findPivot(alg) {
         states.push(cube.getMaskValues());
     }
 
-    // console.log(states.map(state => state.join(",")).join("\n"));
+    
 
     for (let i = 0; i < 54; ++i) {
-        // skip centers
+        
         if (i % 9 == 4) continue;
 
-        // skip U layer
+        
         if (i < 9) continue;
         if (uSideIndices.has(i)) continue;
 
@@ -358,8 +332,8 @@ function findPivot(alg) {
     return -1;
 }
 
-// move the pivot so that it is back in its starting place
-// brute force all combination of 2 rotations
+
+
 function findRotationToFixPivot(pivotIndex) {
     const rotations = ["", "x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"];
 
@@ -368,7 +342,7 @@ function findRotationToFixPivot(pivotIndex) {
             let rotation = rotations[i] + ' ' + rotations[j];
             rotation = rotation.trim();
 
-            // console.log(rotation);
+            
 
             cube.doAlgorithm(rotation);
             if (cube.cubestate[pivotIndex][1] == pivotIndex) {
@@ -400,14 +374,14 @@ function simplifyRotation(move, rotation) {
         return rotationMap[rotation][move[0]] + move.slice(1);
     }
 
-    return move; // Return unchanged if no transformation is needed
+    return move; 
 }
 
 function applyMoves(moves) {
     let ori = cube.wcaOrient();
     doAlg(alg.cube.invert(ori), false);
     let startingRotation = ori;
-  //  console.log("starting rotation: ", startingRotation);
+  
 
 
     let fixPivotRotation = "";
@@ -426,11 +400,11 @@ function applyMoves(moves) {
 
         if (pivotIndex != -1) {
             fixPivotRotation = findRotationToFixPivot(pivotIndex);
-            // if (fixPivotRotation.length > 0) {
-            //     console.log(lastTest.solutions[0], "pivot at", pivotIndex, "fix with rotation", fixPivotRotation);
+            
+            
 
 
-            // }
+            
         }
 
         cube.doAlgorithm(alg.cube.invert(tmp));
@@ -445,7 +419,7 @@ function applyMoves(moves) {
 
     moveHistory.push(moves);
     if (moveHistory.length > MAX_HISTORY_LENGTH) {
-        moveHistory.shift(); // Remove the oldest move if history exceeds the limit
+        moveHistory.shift(); 
     }
 
     cube.doAlgorithm(
@@ -460,7 +434,7 @@ function applyMoves(moves) {
         alg.cube.invert(startingRotation)
         + " " +
         fixPivotRotation
-        // alg.cube.invert(fixPivotRotation)
+        
 
     );
 
@@ -482,14 +456,14 @@ connectSmartCubeElement.addEventListener('click', async () => {
     await connectSmartCube();
 });
 
-// todo actually reset
+
 var resetSessionElement = document.getElementById("resetSession");
 resetSessionElement.addEventListener('click', async () => {
     await connectSmartCube();
 });
 
 
-// buttons
+
 
 function adjustButtonWidths() {
     minButtonWidth = 100;
@@ -505,7 +479,7 @@ function adjustButtonWidths() {
 
         buttons.forEach(function (button) {
             button.style.width = minButtonWidth + 'px';
-            button.style.height = minButtonWidth * 0.85 + 'px'; // Set height equal to width
+            button.style.height = minButtonWidth * 0.85 + 'px'; 
         });
     });
 }
@@ -532,7 +506,7 @@ function showPage() {
 }
 
 for (var setting in defaults) {
-    // If no previous setting exists, use default and update localStorage. Otherwise, set to previous setting
+    
     if (typeof (defaults[setting]) === "boolean") {
         var previousSetting = localStorage.getItem(setting);
         if (previousSetting == null) {
@@ -562,9 +536,9 @@ for (var setting in defaults) {
 }
 
 setTimerDisplay(!document.getElementById("hideTimer").checked);
-// if (document.getElementById("userDefined").checked){
+
 document.getElementById("userDefinedAlgs").style.display = "block";
-// }
+
 
 setVirtualCube(document.getElementById("useVirtual").checked);
 updateVirtualCube();
@@ -655,23 +629,23 @@ mirrorAllAlgsAcrossS.addEventListener("click", function () {
     localStorage.setItem("mirrorAllAlgsAcrossS", this.checked);
 });
 
-// var userDefined = document.getElementById("userDefined");
-// userDefined.addEventListener("click", function(){
-//     document.getElementById("userDefinedAlgs").style.display = this.checked? "block":"none";
-//     localStorage.setItem("userDefined", this.checked);
-// });
+
+
+
+
+
 
 var fullCN = document.getElementById("fullCN");
 fullCN.addEventListener("click", function () {
     localStorage.setItem("fullCN", this.checked);
 });
 
-// var algsetpicker = document.getElementById("algsetpicker");
-// algsetpicker.addEventListener("change", function(){
-//     createCheckboxes();
-// 	shouldRecalculateStatistics = true;
-//     localStorage.setItem("algsetpicker", this.value);
-// });
+
+
+
+
+
+
 
 var clearTimes = document.getElementById("clearTimes");
 clearTimes.addEventListener("click", function () {
@@ -693,17 +667,17 @@ deleteLast.addEventListener("click", function () {
     updateStats();
 });
 
-// var addSelected = document.getElementById("addSelected");
-// addSelected.addEventListener("click", function(){
 
-//     var algList = createAlgList(true);
-//     for (let i = 0; i < algList.length; i++){
-//         algList[i] = algList[i].split("/")[0]
-//     }
-//     document.getElementById("userDefinedAlgs").value += "\n" + algList.join("\n");
-// });
 
-try { // only for mobile
+
+
+
+
+
+
+
+
+try { 
     const leftPopUpButton = document.getElementById("left_popup_button");
     const rightPopUpButton = document.getElementById("right_popup_button");
     leftPopUpButton.addEventListener("click", function () {
@@ -739,10 +713,10 @@ function getRotationMap(moves) {
     let rotationMap = {};
 
     let rotationCube = new RubiksCube();
-   // console.log('moves: ', moves);
+   
     rotationCube.doAlgorithm(moves);
-    // let rotationCubeString = rotationCube.toString();
-    // console.log(rotationCubeString);
+    
+    
 
     let faces = "URFDLB";
     for (let i = 0; i < 6; ++i) {
@@ -756,16 +730,16 @@ function updateVirtualCube(initialRotations = holdingOrientation.value + ' ' + c
     //console.log("preorientation: ", currentPreorientation);
     vc.cubeString = cube.toString();
     let initialMaskedCubeString = cube.toInitialMaskedString(initialMask.value);
-    // console.log(initialMaskedCubeString);
-    // console.log(vc.cubeString);
+    
+    
 
     let rotationMap = getRotationMap(initialRotations);
-    // console.log(rotationMap);
+    
 
     for (let k = 0; k < 54; ++k) {
         if (vc[k] != 'x') {
-            // console.log(vc.cubeString[k]);
-            // console.log(rotationMap[vc.cubeString[k]]);
+            
+            
             vc.cubeString = setCharAt(vc.cubeString, k, rotationMap[vc.cubeString[k]]);
         }
 
@@ -788,10 +762,10 @@ function doAlg(algorithm, updateTimer = false) {
         }
     }
 
-    // Check if the cube is solved while the timer is running
+    
     if (timerIsRunning && cube.isSolved(initialMask.value) && isUsingVirtualCube()) {
         if (updateTimer) {
-            stopTimer(); // Log the time
+            stopTimer(); 
             markCurrentCommAsGood();
             showSuccessFeedback();
 
@@ -814,9 +788,9 @@ function getRandAuf(letter) {
     return aufs[rand];
 }
 
-// Returns a random sequence of quarter turns of the specified length. Quarter turns are used to break OLL. Two consecutive moves may not b on the same axis.
+
 function getPremoves(length) {
-    var previous = "U"; // prevents first move from being U or D
+    var previous = "U"; 
     var moveset = ['U', 'R', 'F', 'D', 'L', 'B'];
     var amts = [" ", "' "];
     var randmove = "";
@@ -866,12 +840,12 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     cube.resetCube();
     cube.doAlgorithm(scramble);
 
-    const edgeBufferPosition = 7; // UF sticker index
-    const cornerBufferPosition = 8; // UFR sticker index
+    const edgeBufferPosition = 7; 
+    const cornerBufferPosition = 8; 
 
     const cycleMapping = cube.getThreeCycleMapping(edgeBufferPosition, cornerBufferPosition);
     if (!cycleMapping) {
-        return ["", scramble]; // Return empty cycle letters if not a valid 3-cycle
+        return ["", scramble]; 
     }
 
     const bufferPosition = cycleMapping.includes(edgeBufferPosition) ? edgeBufferPosition : cornerBufferPosition;
@@ -881,34 +855,11 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
     let letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
 
-    // THE TTS CALL HAS BEEN REMOVED FROM HERE
+    
 
     const cycleLetters = letters.join('');
 
     return [cycleLetters, scramble];
-}
-
-
-function generatePreScramble(raw_alg, generator, times, obfuscateAlg, premoves = "") {
-
-    var genArray = generator.split(",");
-
-    var scramble = premoves;
-    var i = 0;
-
-    for (; i < times; i++) {
-        var rand = Math.floor(Math.random() * genArray.length);
-        scramble += genArray[rand];
-    }
-    scramble += alg.cube.invert(raw_alg);
-
-    if (obfuscateAlg) {
-        return obfuscate(scramble);
-    }
-    else {
-        return scramble;
-    }
-
 }
 
 class AlgTest {
@@ -921,13 +872,11 @@ class AlgTest {
         currentPreorientation = this.preorientation;
         this.solveTime = solveTime;
         this.time = time;
-        // this.set = set;
         this.visualCubeView = visualCubeView;
         this.orientRandPart = orientRandPart;
     }
 }
 
-// Adds extra rotations to the end of an alg to reorient
 function correctRotation(alg) {
     var rc = new RubiksCube();
     rc.doAlgorithm(alg);
@@ -938,7 +887,7 @@ function correctRotation(alg) {
 
 function generateAlgTest(rawAlgStr) {
     if (!rawAlgStr) {
-        return null; // Return null if no algorithm string is provided
+        return null; 
     }
 
     var obfuscateAlg = document.getElementById("realScrambles").checked;
@@ -1000,7 +949,7 @@ function testAlg(algTest, addToHistory = true) {
     var cycleLettersElement = document.getElementById("cycle");
     cycleLettersElement.innerHTML = algTest.cycleLetters;
 
-    // document.getElementById("algdisp").innerHTML = "";
+    
 
     cube.resetCube();
     doAlg(algTest.scramble, false);
@@ -1009,7 +958,7 @@ function testAlg(algTest, addToHistory = true) {
     if (addToHistory) {
         algorithmHistory.push(algTest);
     }
-    //  console.log(algTest);
+    
 
 }
 
@@ -1022,7 +971,7 @@ function updateAlgsetStatistics(algList) {
         "STM (including AUF)": averageMovecount(algList, "btm", true).toFixed(3),
         "SQTM (including AUF)": averageMovecount(algList, "bqtm", true).toFixed(3),
         "Number of algs": algList.length,
-        "Total Time (seconds)": totalTime // Add total time to statistics
+        "Total Time (seconds)": totalTime 
     };
 
     const table = document.getElementById("algsetStatistics");
@@ -1044,13 +993,13 @@ function updateAlgsetStatistics(algList) {
 
 function reTestAlg() {
     var lastTest = algorithmHistory[algorithmHistory.length - 1];
-    //  console.log(lastTest);
+    
     if (lastTest == undefined) {
         return;
     }
     cube.resetCube();
     doAlg(lastTest.scramble, false);
-    //  console.log("ok");
+    
     updateVirtualCube();
 
 }
@@ -1059,9 +1008,9 @@ function updateTrainer(scramble, solutions, algorithm, timer) {
     if (scramble != null) {
         document.getElementById("scramble").innerHTML = scramble;
     }
-    // if (solutions != null) {
-    //     document.getElementById("algdisp").innerHTML = solutions;
-    // }
+    
+    
+    
 
     if (algorithm != null) {
         cube.resetCube();
@@ -1077,15 +1026,15 @@ function fixAlgorithms(algorithms) {
     //for now this just removes brackets
     var i = 0;
     for (; i < algorithms.length; i++) {
-        // console.log(algorithms[i]);
+        
         let currAlg = algorithms[i].replace(/\[|\]|\)|\(/g, "");
-        // currAlg = commToMoves(currAlg);
-        // console.log(currAlg);
+        
+        
 
-        // don't simplifify for now
-        // if (!isCommutator(currAlg)) {
-        //     algorithms[i] = alg.cube.simplify(currAlg);
-        // }
+        
+        
+        
+        
 
     }
     return algorithms;
@@ -1093,44 +1042,9 @@ function fixAlgorithms(algorithms) {
 
 }
 
-function validTextColour(stringToTest) {
-    if (stringToTest === "") { return false; }
-    if (stringToTest === "inherit") { return false; }
-    if (stringToTest === "transparent") { return false; }
-
-    var visualCubeColoursArray = ['black', 'dgrey', 'grey', 'silver', 'white', 'yellow',
-        'red', 'orange', 'blue', 'green', 'purple', 'pink'];
-
-    if (stringToTest[0] !== '#') {
-        return visualCubeColoursArray.indexOf(stringToTest) > -1;
-    } else {
-        return /^#[0-9A-F]{6}$/i.test(stringToTest)
-    }
-}
-
-function stripLeadingHashtag(colour) {
-    if (colour[0] == '#') {
-        return colour.substring(1);
-    }
-
-    return colour;
-}
-
-
-function displayAlgorithm(algTest, reTest = true) {
-    //If reTest is true, the scramble will also b setup on the virtual cube
-    if (reTest) {
-        reTestAlg();
-    }
-
-    updateTrainer(algTest.scramble, algTest.solutions.join("<br><br>"), null, null);
-}
-
 function displayAlgorithmFromHistory(index) {
 
     var algTest = algorithmHistory[index];
-
-    //  console.log( algTest );
 
     var timerText;
     if (algTest.solveTime == null) {
@@ -1168,11 +1082,11 @@ function displayAlgorithmForPreviousTest(reTest = true, showSolution = true) {//
 
 let lastSelectedAlgorithm = null;
 
-let remainingAlgs = []; // Stores the remaining algorithms for the current cycle
-let isFirstRun = true; // Flag to track the first run
+let remainingAlgs = []; 
+let isFirstRun = true; 
 
 function getNextAlgFromSession() {
-    // Check if the queue is empty and repopulate if needed
+    
     if (sessionQueue.length === 0) {
         if (isDrillingMode) {
             if (!isFirstDrillRun) {
@@ -1181,19 +1095,19 @@ function getNextAlgFromSession() {
                 jingle.play();
             }
             isFirstDrillRun = false;
-            // Re-initialize and flatten drilling pairs to restart the cycle
+            
             const boxAlgs = document.getElementById("userDefinedAlgs").value.split("\n").filter(alg => alg.trim() !== "");
             initializeDrillingPairs(boxAlgs);
             sessionQueue = drillingPairs.flat();
             if (sessionQueue.length === 0) return null;
-        } else { // Regular Mode
+        } else { 
             if (!isFirstRun) {
                 const jingle = document.getElementById("completionJingle");
                 jingle.volume = 0.5;
                 jingle.play();
             }
             isFirstRun = false;
-            // Re-initialize and re-shuffle the list to restart the cycle
+            
             const algList = createAlgList();
             if (algList.length === 0) return null;
             for (let i = algList.length - 1; i > 0; i--) {
@@ -1204,7 +1118,7 @@ function getNextAlgFromSession() {
         }
     }
 
-    // Update progress display based on the mode
+    
     if (isDrillingMode) {
          const completedPairs = totalDrillPairs - Math.ceil(sessionQueue.length / 2);
          document.getElementById("progressDisplay").innerText = `Progress: ${completedPairs}/${totalDrillPairs}`;
@@ -1214,7 +1128,7 @@ function getNextAlgFromSession() {
         document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex}/${totalAlgs}`;
     }
 
-    // Return the next item from the queue, removing it
+    
     return sessionQueue.shift();
 }
 
@@ -1262,7 +1176,7 @@ function stopTimer(logTime = true) {
     }
 
     if (document.getElementById("timer").style.display == 'none') {
-        // Don't do anything if the timer is hidden
+        
         return;
     }
 
@@ -1276,13 +1190,13 @@ function stopTimer(logTime = true) {
 
     if (logTime) {
         var lastTest = algorithmHistory[algorithmHistory.length - 1];
-        var cycleLetters = lastTest ? lastTest.cycleLetters : ""; // Get the 3-cycle letters
-        var solveTime = new SolveTime(time, '', cycleLetters); // Include cycle letters
+        var cycleLetters = lastTest ? lastTest.cycleLetters : ""; 
+        var solveTime = new SolveTime(time, '', cycleLetters); 
         lastTest.solveTime = solveTime;
         timeArray.push(solveTime);
         console.log(timeArray);
 
-        // Increment the repetition counter
+        
         incrementReps();
 
         updateTimeList();
@@ -1314,101 +1228,30 @@ function updateTimeList() {
     timeList.innerHTML = "&nbsp";
 
     for (let i = 0; i < timeArray.length; i++) {
-        timeList.innerHTML += timeArray[i].toString(); // Includes cycle letters
+        timeList.innerHTML += timeArray[i].toString(); 
         timeList.innerHTML += " ";
     }
 
     scrollTimes.scrollTop = scrollTimes.scrollHeight;
 }
 
-//Create Checkboxes for each subset
-//Each subset has id of subset name, and is followed by text of subset name.
-
-// function createAlgsetPicker(){
-//     var algsetPicker = document.getElementById("algsetpicker")
-//     for (var set in window.algs){
-//         var option = document.createElement("option")
-//         option.text = set;
-//         algsetPicker.add(option);
-
-//     }
-//     //algsetPicker.size = Object.keys(window.algs).length
-// }
-
-
-
-// function createCheckboxes(){
-
-//     var set = document.getElementById("algsetpicker").value;
-
-
-//     var full_set = window.algs[set];
-
-//     if (!full_set){
-//         set = document.getElementById("algsetpicker").options[0].value;
-//         document.getElementById("algsetpicker").value = set;
-//         full_set = window.algs[set]
-//     }
-//     var subsets = Object.keys(full_set);
-
-//     var myDiv = document.getElementById("cboxes");
-
-//     myDiv.innerHTML = "";
-
-//     for (var i = 0; i < subsets.length; i++) {
-//         var checkBox = document.createElement("input");
-//         var label = document.createElement("label");
-//         checkBox.type = "checkbox";
-//         checkBox.value = subsets[i];
-//         checkBox.onclick = function(){
-//             currentAlgIndex = 0;
-//             shouldRecalculateStatistics=true; 
-//             //Every time a checkbox is pressed, the algset statistics should b updated.
-
-//             var checkboxes = document.querySelectorAll('#cboxes input[type="checkbox"]');
-//             const anyUnchecked = Array.from(checkboxes).some(checkbox => !checkbox.checked);
-//             toggleAlgsetSelectAll.textContent = anyUnchecked ? 'Select All' : 'Unselect All';
-//         }
-//         checkBox.setAttribute("id", set.toLowerCase() +  subsets[i]);
-
-//         myDiv.appendChild(checkBox);
-//         myDiv.appendChild(label);
-//         label.appendChild(document.createTextNode(subsets[i]));
-//     }
-// }
-
-// var toggleAlgsetSelectAll = document.getElementById("toggleAlgsetSelectAll");
-// toggleAlgsetSelectAll.addEventListener('click', () => {
-//     var checkboxes = document.querySelectorAll('#cboxes input[type="checkbox"]');
-//     const anyUnchecked = Array.from(checkboxes).some(checkbox => !checkbox.checked);
-//     checkboxes.forEach(checkbox => checkbox.checked = anyUnchecked);
-//     toggleAlgsetSelectAll.textContent = !anyUnchecked ? 'Select All' : 'Unselect All';
-// });
-
-function clearSelectedAlgsets() {
-    var elements = document.getElementById("algsetpicker").options;
-    for (var i = 0; i < elements.length; i++) {
-        elements[i].selected = false;
-    }
-}
-
 function findMistakesInUserAlgs(userAlgs) {
     var errorMessage = "";
     var newList = [];
-    var newListDisplay = []; // contains all valid algs + commented algs
+    var newListDisplay = []; 
 
     for (var i = 0; i < userAlgs.length; i++) {
         let alg = userAlgs[i].trim();
 
-        // Remove leading asterisks (*) or minus signs (-) and trim spaces
+        
         alg = alg.replace(/^[\*\-]+/, "").trim();
 
-        // Replace apostrophe-like characters with a standard single quote
+        
         alg = alg.replace(/[\u2018\u0060\u2019\u00B4]/g, "'").replace(/"/g, "");
 
         let algWithParenthesis = alg;
 
-        // Remove comments in parentheses and trim
+        
         alg = alg.replace(/\([^)]*\)/g, "").trim();
 
         if (!isCommutator(alg)) {
@@ -1419,11 +1262,11 @@ function findMistakesInUserAlgs(userAlgs) {
                     newListDisplay.push(algWithParenthesis);
                 }
             } catch (err) {
-                // attempt to get the cycle anyway
+                
                 cube.resetCube();
                 cube.doAlgorithm(alg);
-                const edgeBufferPosition = 7; // UF sticker index
-                const cornerBufferPosition = 8; // UFR sticker index
+                const edgeBufferPosition = 7; 
+                const cornerBufferPosition = 8; 
 
                 const cycleMapping = cube.getThreeCycleMapping(edgeBufferPosition, cornerBufferPosition);
                 cube.resetCube();
@@ -1439,7 +1282,7 @@ function findMistakesInUserAlgs(userAlgs) {
                 }
             }
         } else {
-            // TODO: Check valid commutators
+            
             newList.push(alg);
             newListDisplay.push(algWithParenthesis);
         }
@@ -1479,10 +1322,10 @@ function averageMovecount(algList, metric, includeAUF) {
     for (; i < algList.length; i++) {
         var topAlg = algList[i].split("!")[0];
         topAlg = topAlg.replace(/\[|\]|\)|\(/g, "");
-        // convert to moves if in comm notation
-        // console.log(topAlg);
+        
+        
         topAlg = commToMoves(topAlg);
-        // console.log(topAlg);
+        
 
         var moves = alg.cube.simplify(alg.cube.expand(alg.cube.fromString(topAlg)));
 
@@ -1498,17 +1341,6 @@ function averageMovecount(algList, metric, includeAUF) {
     }
 
     return totalmoves / algList.length;
-}
-
-function toggleVirtualCube() {
-    var sim = document.getElementById("simcube");
-
-    if (sim.style.display == 'none') {
-        sim.style.display = 'block';
-    }
-    else {
-        sim.style.display = 'none';
-    }
 }
 
 function setVirtualCube(setting) {
@@ -1564,15 +1396,15 @@ function nextScramble(displayReady = true) {
     updateLastCycleInfo();
     hideScramble();
 
-    // On the first run, upcomingAlgTest will be null, so we generate the first one.
+    
     if (!upcomingAlgTest) {
         upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
     }
 
-    // The "upcoming" test from the last turn now becomes the "current" one.
+    
     const currentAlgTest = upcomingAlgTest;
 
-    // If there is no current test, it means the session is empty or complete.
+    
     if (!currentAlgTest) {
         document.getElementById("scramble").innerHTML = "Session Complete!";
         document.getElementById("cycle").innerHTML = "";
@@ -1580,26 +1412,26 @@ function nextScramble(displayReady = true) {
         return;
     }
 
-    // Speak the cycle letters for the CURRENT test that is about to be displayed.
+    
     if (shouldReadDrillTTS && currentAlgTest.cycleLetters) {
         speakText(parseLettersForTTS(currentAlgTest.cycleLetters.split("")));
     }
 
-    // Now, we generate the *next* upcoming test to be ready for the next scramble.
+    
     upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
 
-    // Update the DOM to show the current and upcoming cycle letters.
+    
     document.getElementById("cycle").innerHTML = currentAlgTest.cycleLetters;
     const upcomingCycleElement = document.getElementById("upcoming_cycle");
 
     if (upcomingAlgTest) {
         upcomingCycleElement.innerHTML = upcomingAlgTest.cycleLetters;
     } else {
-        // This is the last algorithm in the cycle.
+        
         upcomingCycleElement.innerHTML = "End";
     }
 
-    // Run the test for the current algorithm, which updates the cube and history.
+    
     testAlg(currentAlgTest);
 
     if (isUsingVirtualCube()) {
@@ -1667,7 +1499,7 @@ function updateControls() {
         }
         reTestAlg();
         document.getElementById("scramble").innerHTML = "&nbsp;";
-        // document.getElementById("algdisp").innerHTML = "";
+        
     });
     listener.register(new KeyCombo("Enter"), function () {
         nextScramble();
@@ -1694,19 +1526,19 @@ function release(event) {
         }
 
         document.getElementById("timer").style.color = "white"; //Timer should never b any color other than white when space is not pressed down
-        // if (!isUsingVirtualCube()) {
-        //     if (document.getElementById("algdisp").innerHTML == "") {
-        //         //Right after a new scramble is displayed, space starts the timer
+        
+        
+        
 
 
-        //         if (doNothingNextTimeSpaceIsPressed) {
-        //             doNothingNextTimeSpaceIsPressed = false;
-        //         }
-        //         else {
-        //             startTimer();
-        //         }
-        //     }
-        // }
+        
+        
+        
+        
+        
+        
+        
+        
     }
 };
 document.onkeyup = release
@@ -1754,11 +1586,11 @@ function press(event) { //Stops the screen from scrolling down when you press sp
                     }
 
                 }
-                // else if (document.getElementById("algdisp").innerHTML != "") {
-                //     nextScramble(); //If the solutions are currently displayed, space should test on the next alg.
+                
+                
 
-                //     doNothingNextTimeSpaceIsPressed = true;
-                // }
+                
+                
 
                 else if (document.getElementById("timer").innerHTML == "Ready") {
                     document.getElementById("timer").style.color = "green";
@@ -1779,7 +1611,7 @@ try { //only for mobile
 class SolveTime {
     constructor(time, cycleLetters = "") {
         this.time = time;
-        this.cycleLetters = cycleLetters; // Add cycle letters
+        this.cycleLetters = cycleLetters; 
     }
 
     toString(decimals = 2) {
@@ -1859,8 +1691,8 @@ function RubiksCube() {
             let uniqueColorsOnFace = new Set();
 
             for (var j = 0; j < 9; j++) {
-                // console.log(this.toString());
-                // console.log(initialMask);
+                
+                
                 if (initialMask.length == 54 && initialMask[this.cubestate[9 * i + j][1]] == 'x') {
                     continue;
                 }
@@ -1874,8 +1706,8 @@ function RubiksCube() {
         return true;
     }
     this.wcaOrient = function () {
-        // u-r--f--d--l--b
-        // 4 13 22 31 40 49
+        
+        
         //
         var moves = "";
 
@@ -1917,7 +1749,7 @@ function RubiksCube() {
         for (i = 0; i < this.cubestate.length; i++) {
             str += sides[this.cubestate[i][0] - 1];
         }
-        // console.log(str);
+        
         return str;
     }
 
@@ -1933,12 +1765,6 @@ function RubiksCube() {
             }
         }
         return str;
-    }
-
-
-    this.test = function (alg) {
-        this.doAlgorithm(alg);
-        updateVirtualCube();
     }
 
     this.doAlgorithm = function (alg) {
@@ -2026,17 +1852,6 @@ function RubiksCube() {
             }
         }
 
-    }
-
-    this.solveNoRotate = function () {
-        //Center sticker indexes: 4, 13, 22, 31, 40, 49
-        var cubestate = this.cubestate;
-        this.cubestate = [cubestate[4], cubestate[4], cubestate[4], cubestate[4], cubestate[4], cubestate[4], cubestate[4], cubestate[4], cubestate[4],
-        cubestate[13], cubestate[13], cubestate[13], cubestate[13], cubestate[13], cubestate[13], cubestate[13], cubestate[13], cubestate[13],
-        cubestate[22], cubestate[22], cubestate[22], cubestate[22], cubestate[22], cubestate[22], cubestate[22], cubestate[22], cubestate[22],
-        cubestate[31], cubestate[31], cubestate[31], cubestate[31], cubestate[31], cubestate[31], cubestate[31], cubestate[31], cubestate[31],
-        cubestate[40], cubestate[40], cubestate[40], cubestate[40], cubestate[40], cubestate[40], cubestate[40], cubestate[40], cubestate[40],
-        cubestate[49], cubestate[49], cubestate[49], cubestate[49], cubestate[49], cubestate[49], cubestate[49], cubestate[49], cubestate[49]];
     }
 
     this.doU = function (times) {
@@ -2218,32 +2033,32 @@ function RubiksCube() {
 RubiksCube.prototype.getThreeCycleMapping = function (edgeBuffer, cornerBuffer) {
     const unsolvedPositions = [];
 
-    // Step 1: Identify unsolved positions
+    
     for (let i = 0; i < this.cubestate.length; i++) {
         if (this.cubestate[i][0] !== SOLVED_POSITIONS[i][0] || this.cubestate[i][1] !== SOLVED_POSITIONS[i][1]) {
             unsolvedPositions.push(i);
         }
     }
 
-    // Determine if it's an edge cycle or a corner cycle
+    
     let bufferPosition;
     if (unsolvedPositions.length === 6) {
-        bufferPosition = edgeBuffer; // Edge cycle
+        bufferPosition = edgeBuffer; 
     } else if (unsolvedPositions.length === 9) {
-        bufferPosition = cornerBuffer; // Corner cycle
+        bufferPosition = cornerBuffer; 
     } else {
         console.log("Not a valid 3-cycle: ", unsolvedPositions);
         return null;
     }
 
-    // Step 2: Determine the target positions
+    
     const cycleMapping = {};
     for (const pos of unsolvedPositions) {
-        const targetPosition = this.cubestate[pos][1]; // Where the piece should go
+        const targetPosition = this.cubestate[pos][1]; 
         cycleMapping[pos] = targetPosition;
     }
 
-    // Step 3: Find the cycle containing the buffer
+    
     const visited = new Set();
     const cycle = [];
     let current = bufferPosition;
@@ -2254,7 +2069,7 @@ RubiksCube.prototype.getThreeCycleMapping = function (edgeBuffer, cornerBuffer) 
         current = cycleMapping[current];
     }
 
-    // Ensure the cycle is valid (contains exactly 3 positions)
+    
     if (cycle.length !== 3) {
         console.log("Invalid cycle for buffer position:", bufferPosition);
         return null;
@@ -2265,16 +2080,16 @@ RubiksCube.prototype.getThreeCycleMapping = function (edgeBuffer, cornerBuffer) 
 
 function parseLettersForTTS(letters) {
     if (letters.length === 2) {
-        const pair = letters.join(""); // Combine letters into a pair (e.g., "AG")
-        const word = LETTER_PAIR_TO_WORD[pair]; // Look up the word for the pair
+        const pair = letters.join(""); 
+        const word = LETTER_PAIR_TO_WORD[pair]; 
 
         if (word && word.trim() !== "") {
-            return word; // Return the word if found
+            return word; 
         } else {
-            return letters.join(" "); // Fallback: Return the letters individually
+            return letters.join(" "); 
         }
     } else {
-        return letters.join(" "); // Fallback for non-pairs
+        return letters.join(" "); 
     }
 }
 
@@ -2282,11 +2097,11 @@ function parseLettersForTTS(letters) {
 function checkForSpecialSequences() {
     const recentMoves = moveHistory.join("");
 
-    // this needs to be commented out if we wanna use D8
-    // if (recentMoves.endsWith("D D D D ") || recentMoves.endsWith("D'D'D'D'")) {
-    //     console.log("Special sequence detected: D4");
-    //     triggerSpecialAction("D4");
-    // }
+    
+    
+    
+    
+    
 
     if (recentMoves.endsWith("D D D D D D D D ") || recentMoves.endsWith("D'D'D'D'D'D'D'D'")) {
         console.log("Special sequence detected: D4");
@@ -2298,49 +2113,45 @@ function checkForSpecialSequences() {
         triggerSpecialAction("B4");
     }
 
-    // Add more sequences as needed
+    
     if (recentMoves.endsWith("L L L L ") || recentMoves.endsWith("L'L'L'L'")) {
         console.log("Special sequence detected: L4");
         triggerSpecialAction("L4");
     }
 
-    // Add more sequences as needed
+    
     if (recentMoves.endsWith("F F F F ") || recentMoves.endsWith("F'F'F'F'")) {
         console.log("Special sequence detected: F4");
         triggerSpecialAction("F4");
     }
 
-    // Add more sequences as needed
+    
     if (recentMoves.endsWith("R R R R ") || recentMoves.endsWith("R'R'R'R'")) {
         console.log("Special sequence detected: R4");
         triggerSpecialAction("R4");
     }
 
-    // Add more sequences as needed
+    
     if (recentMoves.endsWith("U U U U U U U U ") || recentMoves.endsWith("U'U'U'U'U'U'U'U'")) {
         console.log("Special sequence detected: U6");
         triggerSpecialAction("U6");
     }
 }
 
-function determineReadingMode(text) {
-    return processRegularMode(text);
-}
-
 function processRegularMode(text) {
-    // Check if the user is on a mobile device
+    
     const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
-    // Preprocess the text to add separators based on the device type
+    
     return text
-        .split(" ") // Split into individual moves
+        .split(" ") 
         .map(move => {
             if (move.endsWith("'") || move.endsWith("2")) {
-                return move; // Keep moves with a prime or "2" unchanged
+                return move; 
             }
-            return isMobile ? move : `${move},`; // Add a comma for non-mobile devices
+            return isMobile ? move : `${move},`; 
         })
-        .join(isMobile ? "," : " "); // Join with spaces for both, but commas are added for non-mobile
+        .join(isMobile ? "," : " "); 
 }
 
 function speakText(text, rate = 1.0, readComm = false, readHype = false) {
@@ -2348,30 +2159,30 @@ function speakText(text, rate = 1.0, readComm = false, readHype = false) {
 
     if (!enableTTS) {
         console.log("TTS is disabled.");
-        return; // Exit if TTS is disabled
+        return; 
     }
 
     if ('speechSynthesis' in window) {
-        // Create the utterance instance only once
+        
         if (!utterance) {
             utterance = new SpeechSynthesisUtterance();
         }
 
-        // Stop any ongoing speech before speaking new text
+        
         window.speechSynthesis.cancel();
 
-        // Set properties directly to avoid redundant operations
-        utterance.rate = rate; // Adjust speed
-        utterance.lang = localStorage.getItem("ttsLanguage") || "pl-PL"; // Get language or use default
+        
+        utterance.rate = rate; 
+        utterance.lang = localStorage.getItem("ttsLanguage") || "pl-PL"; 
 
-        // Process the text using the extracted method
+        
         if (!readHype) {
             utterance.text = processTextForTTS(text, readComm);
         } else {
-            utterance.text = text; // Use the original text for hype reading
+            utterance.text = text; 
         }
 
-        // Speak the text immediately
+        
         window.speechSynthesis.speak(utterance);
     } else {
         console.warn('Text-to-Speech is not supported in this browser.');
@@ -2380,52 +2191,46 @@ function speakText(text, rate = 1.0, readComm = false, readHype = false) {
 
 function processTextForTTS(text, readComm = false) {
     if (readComm) {
-        // Handle the case where readComm is true
+        
         if (currentMode === "corner") {
-            // If the mode is "corner", only read up to the first occurrence of ":"
+            
             const colonIndex = text.indexOf(":");
             if (colonIndex !== -1) {
-                text = text.substring(0, colonIndex).trim(); // Extract text before the colon
+                text = text.substring(0, colonIndex).trim(); 
             } else {
-                return "czysty kom lub dziewięcioruchowiec"; // Return default text if no colon is found
+                return "czysty kom lub dziewięcioruchowiec"; 
             }
         }
 
-        // Preprocess the text to replace special characters with words
+        
         const replacements = {
             ":": " potem",
             "'": " priim",
             "/": " slesz"
         };
 
-        // Dynamically construct the regex from the keys of the replacements map
         const regex = new RegExp(`[${Object.keys(replacements).join("")}]`, "g");
-
-        // Replace all matches using the replacements map
         let processedText = text.replace(regex, match => replacements[match]);
-
-        // Ensure spaces are preserved between moves
         processedText = processedText.split(" ").join(" ");
 
         return processedText;
     } else {
-        // Determine the reading mode and process the text
-        return determineReadingMode(text);
+        return processRegularMode(text);
     }
 }
 
 function triggerSpecialAction(sequence) {
-    moveHistory.length = 0; // Clear the history after checking
+    moveHistory.length = 0; 
     switch (sequence) {
         case "D8":
             console.log("D4 detected! Reading out current displayed scramble");
-            // Retrieve the scramble currently displayed on the screen
+            
             const displayedScrambleElement = document.getElementById("scramble");
             const displayedScrambleText = displayedScrambleElement ? displayedScrambleElement.textContent : null;
 
             if (displayedScrambleText) {
                 console.log("Reading out displayed scramble:", displayedScrambleText);
-                speakText(displayedScrambleText, 1, true); // Trigger TTS to read out the displayed scramble
+                speakText(displayedScrambleText, 1, true); 
             } else {
                 console.warn("No displayed scramble available to read out.");
             }
@@ -2443,9 +2248,9 @@ function triggerSpecialAction(sequence) {
         case "L4":
             console.log("L4 detected! Advancing drill or running next alg.");
             if (isDrillingMode) {
-                advanceDrill(); // Special action for drilling mode
+                advanceDrill(); 
             } else {
-                markCurrentCommAsBad(); // Original behavior for regular mode
+                markCurrentCommAsBad(); 
                 nextScramble();
             }
             break;
@@ -2456,7 +2261,7 @@ function triggerSpecialAction(sequence) {
             break;
         case "U6":
             console.log("U6 detected! Marking last alg as good");
-            goodAlg.play(); // Play a sound to indicate success
+            goodAlg.play(); 
             markLastCommAsGood();
             break;
         default:
@@ -2468,10 +2273,10 @@ function enableTtsOnStartup() {
     const enableTTSCheckbox = document.getElementById("enableTTS");
     const savedTTSState = localStorage.getItem("enableTTS");
 
-    // Set the checkbox state based on the saved value or default to true
+    
     enableTTSCheckbox.checked = savedTTSState === "true";
 
-    // Add an event listener to update localStorage when the checkbox is toggled
+    
     enableTTSCheckbox.addEventListener("change", function () {
         localStorage.setItem("enableTTS", enableTTSCheckbox.checked);
     });
@@ -2480,13 +2285,13 @@ function enableTtsOnStartup() {
 async function connectSmartCube() {
     try {
         if (conn) {
-            // Disconnect the cube if already connected
+            
             await conn.disconnect();
             connectSmartCubeElement.textContent = 'Connect';
             alert(`Smart cube ${conn.deviceName} disconnected`);
             conn = null;
         } else {
-            // Attempt to connect to the cube
+            
             conn = await connect(applyMoves);
             if (!conn) {
                 alert(`Smart cube is not supported`);
@@ -2494,7 +2299,7 @@ async function connectSmartCube() {
                 await conn.initAsync();
                 connectSmartCubeElement.textContent = 'Disconnect';
 
-                // Check the current progress
+                
                 const progressText = document.getElementById("progressDisplay").innerText;
                 const [currentProgress, totalProgress] = progressText
                     .replace("Progress: ", "")
@@ -2502,9 +2307,9 @@ async function connectSmartCube() {
                     .map(Number);
 
                 if (currentProgress === 0) {
-                    initializeSession(); // Initialize the session if no progress
+                    initializeSession(); 
                 } else {
-                    // Retry the current scramble if progress is higher than 0
+                    
                     retryCurrentAlgorithm();
                 }
             }
@@ -2516,7 +2321,7 @@ async function connectSmartCube() {
 }
 
 function retryCurrentAlgorithm() {
-    // Get the last tested algorithm from the history
+    
     const lastTest = algorithmHistory[algorithmHistory.length - 1];
     stopTimer(false);
 
@@ -2525,26 +2330,26 @@ function retryCurrentAlgorithm() {
         return;
     }
 
-    // Reset the cube and apply the scramble
+    
     cube.resetCube();
     doAlg(lastTest.scramble, false);
     updateVirtualCube();
 
-    // Reset the timer display
+    
     document.getElementById("timer").innerHTML = "0.00";
 
-    // Optionally, display the algorithm and cycle letters again
+    
     document.getElementById("scramble").innerHTML = `<span>${lastTest.orientRandPart}</span> ${lastTest.rawAlgs[0]}`;
     document.getElementById("cycle").innerHTML = lastTest.cycleLetters;
 
-    // Trigger TTS to read out the cycle letters
+    
     speakText(parseLettersForTTS(lastTest.cycleLetters.split("")));
 
     console.log("Retrying algorithm:", lastTest.rawAlgs[0]);
     startTimer();
 }
 
-const cycleFeedbackMap = new Map(); // Map to store cycle letters and feedback (1 for good, 0 for bad)
+const cycleFeedbackMap = new Map(); 
 
 function markCurrentCommAsGood() {
     const lastTest = algorithmHistory[algorithmHistory.length - 1];
@@ -2555,10 +2360,10 @@ function markCurrentCommAsGood() {
 
     const cycleLetters = lastTest.cycleLetters;
     if (!cycleFeedbackMap.has(cycleLetters)) {
-        cycleFeedbackMap.set(cycleLetters, 1); // Add cycle letters with value 1 (good)
+        cycleFeedbackMap.set(cycleLetters, 1); 
         console.log(`Marked "${cycleLetters}" as Good.`);
-        updateLastCycleInfo(); // Update the last cycle letters
-        updateFeedbackResults(); // Update the results view
+        updateLastCycleInfo(); 
+        updateFeedbackResults(); 
     } else {
         console.warn(`"${cycleLetters}" is already marked as ${cycleFeedbackMap.get(cycleLetters) === 1 ? "Good" : "Bad"}.`);
     }
@@ -2573,10 +2378,10 @@ function markCurrentCommAsBad() {
 
     const cycleLetters = lastTest.cycleLetters;
     if (!cycleFeedbackMap.has(cycleLetters)) {
-        cycleFeedbackMap.set(cycleLetters, 0); // Add cycle letters with value 0 (bad)
+        cycleFeedbackMap.set(cycleLetters, 0); 
         console.log(`Marked "${cycleLetters}" as Bad.`);
-        updateLastCycleInfo(); // Update the last cycle letters
-        updateFeedbackResults(); // Update the results view
+        updateLastCycleInfo(); 
+        updateFeedbackResults(); 
     } else {
         console.warn(`"${cycleLetters}" is already marked as ${cycleFeedbackMap.get(cycleLetters) === 1 ? "Good" : "Bad"}.`);
     }
@@ -2596,11 +2401,11 @@ function markLastCommAsChange() {
         return;
     }
 
-    // Change the feedback value to 2 (Change/Drill alg)
+    
     cycleFeedbackMap.set(cycleLetters, 2);
 
     console.log(`Marked "${cycleLetters}" as Change/Drill alg.`);
-    updateFeedbackResults(); // Update the results view
+    updateFeedbackResults(); 
 }
 
 document.getElementById("goodButton").addEventListener("click", markCurrentCommAsGood);
@@ -2626,7 +2431,7 @@ function updateFeedbackResults() {
     const lastCycleLettersElement = document.getElementById("lastCycleLetters");
     const lastCycleLetters = lastCycleLettersElement.textContent;
 
-    // Separate the cycle letters into good, bad, and change lists
+    
     const goodCycles = [];
     const badCycles = [];
     const changeCycles = [];
@@ -2641,18 +2446,18 @@ function updateFeedbackResults() {
         }
     });
 
-    // Sort the lists using the custom comparator
+    
     goodCycles.sort(customComparator);
     badCycles.sort(customComparator);
     changeCycles.sort(customComparator);
 
-    // Format the lists and highlight the last cycle letters
+    
     goodListElement.innerHTML = formatListWithHighlight(goodCycles, lastCycleLetters);
     badListElement.innerHTML = formatListWithHighlight(badCycles, lastCycleLetters);
     changeListElement.innerHTML = formatListWithHighlight(changeCycles, lastCycleLetters);
 }
 
-// Helper function to format the list and highlight the last cycle letters
+
 function formatListWithHighlight(list, highlightItem) {
     return list
         .map(item => {
@@ -2665,16 +2470,16 @@ function formatListWithHighlight(list, highlightItem) {
 }
 
 function customComparator(a, b) {
-    const letterOrder = "AOIEFGHJJKLMNBPQTSRCDWZ"; // Custom letter order
+    const letterOrder = "AOIEFGHJJKLMNBPQTSRCDWZ"; 
     const getOrder = (letter) => letterOrder.indexOf(letter);
 
-    // Compare the first letters of the cycle pairs
+    
     const firstLetterComparison = getOrder(a[0]) - getOrder(b[0]);
     if (firstLetterComparison !== 0) {
         return firstLetterComparison;
     }
 
-    // If the first letters are the same, compare the second letters
+    
     return getOrder(a[1]) - getOrder(b[1]);
 }
 
@@ -2688,24 +2493,24 @@ function hideScramble() {
     const scrambleElement = document.getElementById("scramble");
     const obfuscateScrambleCheckbox = document.getElementById("obfuscateScrambleCheckbox");
 
-    // Only obfuscate the scramble if the checkbox is checked
+    
     if (obfuscateScrambleCheckbox.checked) {
         scrambleElement.classList.remove("revealed");
         scrambleElement.classList.add("obfuscated");
-      //  console.log("Scramble obfuscated.");
+      
     } else {
         revealScramble();
-      //  console.log("Scramble shown by default.");
+      
     }
 }
 
 const obfuscateScrambleCheckbox = document.getElementById("obfuscateScrambleCheckbox");
 
-// Load the saved state from localStorage
+
 const savedObfuscateState = localStorage.getItem("obfuscateScramble") === "true";
 obfuscateScrambleCheckbox.checked = savedObfuscateState;
 
-// Add an event listener to update localStorage when the checkbox is toggled
+
 obfuscateScrambleCheckbox.addEventListener("change", function () {
     localStorage.setItem("obfuscateScramble", obfuscateScrambleCheckbox.checked);
     console.log(`Obfuscate Scramble is now ${obfuscateScrambleCheckbox.checked ? "enabled" : "disabled"}`);
@@ -2715,19 +2520,19 @@ function copyScrambleAndCycle(scrambleId, cycleId, usePrevious = false) {
     let scrambleText, cycleLetters;
 
     if (usePrevious) {
-        // Use previous cycle and scramble data
+        
         scrambleText = previousScramble || "No previous scramble available";
         cycleLetters = previousCycle || "No previous cycle available";
     } else {
-        // Use current cycle and scramble data
+        
         scrambleText = document.getElementById(scrambleId).textContent.trim();
         cycleLetters = document.getElementById(cycleId).textContent.trim();
     }
 
-    const pieceNotation = getPieceNotation(cycleLetters); // Get the piece notation
+    const pieceNotation = getPieceNotation(cycleLetters); 
 
     if (scrambleText && pieceNotation) {
-        const combinedText = `${scrambleText} - ${pieceNotation}`; // Combine scramble and piece notation
+        const combinedText = `${scrambleText} - ${pieceNotation}`; 
         navigator.clipboard.writeText(combinedText).then(() => {
             console.log("Copied to clipboard:", combinedText);
         }).catch(err => {
@@ -2742,10 +2547,10 @@ document.getElementById("scramble").addEventListener("click", function () {
     const obfuscateScrambleCheckbox = document.getElementById("obfuscateScrambleCheckbox");
 
     if (obfuscateScrambleCheckbox.checked) {
-        // If obfuscate scramble is enabled, reveal the scramble
+        
         revealScramble();
     } else {
-        // Call the extracted function to copy the scramble and cycle letters
+        
         copyScrambleAndCycle("scramble", "cycle");
     }
 });
@@ -2756,37 +2561,37 @@ function updateLastCycleInfo() {
     const lastScrambleElement = document.getElementById("lastScramble");
 
     if (lastTest) {
-        // Update cycle letters
+        
         const cycleLetters = lastTest.cycleLetters || "None";
         lastCycleLettersElement.textContent = cycleLetters;
 
-        // Use getPieceNotation to get the formatted positions
+        
         const formattedPositions = getPieceNotation(cycleLetters);
 
         if (!formattedPositions || formattedPositions.includes("Unknown")) {
             console.warn("Missing mapping for one or more letters:", cycleLetters);
-            window.lastCyclePositions = "Unknown"; // Fallback to "Unknown"
+            window.lastCyclePositions = "Unknown"; 
         } else {
-            window.lastCyclePositions = formattedPositions; // Store globally for reuse
+            window.lastCyclePositions = formattedPositions; 
         }
 
-        // Update scramble
+        
         try {
             lastScrambleElement.textContent = lastTest.rawAlgs[0] || "None";
         } catch (error) {
             console.error("Error retrieving commutator notation:", error);
-            lastScrambleElement.textContent = "None"; // Fallback to "None"
+            lastScrambleElement.textContent = "None"; 
         }
 
-        // **Update previous scramble and cycle variables**
+        
         previousScramble = lastScrambleElement.textContent.trim();
         previousCycle = lastCycleLettersElement.textContent.trim();
     } else {
         lastCycleLettersElement.textContent = "None";
         lastScrambleElement.textContent = "None";
-        window.lastCyclePositions = null; // Clear stored positions
+        window.lastCyclePositions = null; 
 
-        // **Clear previous scramble and cycle variables**
+        
         previousScramble = "";
         previousCycle = "";
     }
@@ -2797,7 +2602,7 @@ function copyFeedbackToClipboard() {
     const badList = document.getElementById("badList").textContent.split(", ");
     const changeDrillList = document.getElementById("changeList").textContent.split(", ");
 
-    // Helper function to group elements by their starting letter
+    
     function groupByStartingLetter(list) {
         const grouped = {};
         list.forEach(item => {
@@ -2808,21 +2613,21 @@ function copyFeedbackToClipboard() {
             grouped[firstLetter].push(item);
         });
 
-        // Format the grouped elements into lines
+        
         return Object.values(grouped)
             .map(group => group.join(" "))
             .join("\n");
     }
 
-    // Format each list
+    
     const formattedGoodList = groupByStartingLetter(goodList);
     const formattedBadList = groupByStartingLetter(badList);
     const formattedChangeDrillList = groupByStartingLetter(changeDrillList);
 
-    // Combine the formatted lists with labels
+    
     const feedbackText = `Good:\n${formattedGoodList}\n\nChange/Drill:\n${formattedChangeDrillList}\n\nBad:\n${formattedBadList}`;
 
-    // Copy the content to the clipboard
+    
     navigator.clipboard.writeText(feedbackText).then(() => {
         console.log("Feedback copied to clipboard!");
         //alert("Feedback copied to clipboard!");
@@ -2832,7 +2637,7 @@ function copyFeedbackToClipboard() {
     });
 }
 
-// Function to copy text to clipboard
+
 function copyToClipboard(elementId) {
     const text = document.getElementById(elementId).innerText;
     navigator.clipboard.writeText(text).then(() => {
@@ -2842,20 +2647,20 @@ function copyToClipboard(elementId) {
     });
 }
 
-// Function to convert cycle letters to UFR/UF format and copy to clipboard
+
 function copyCyclePositions(originId = "none") {
     let cycleData;
 
-    // Determine the source of the invocation
+    
     if (originId === "lastCycleLetters" || originId === "lastScramble") {
-        // Use the previous cycle data
+        
         cycleData = previousCycle || "No previous cycle data available";
     } else {
-        // Use the current cycle data
+        
         cycleData = document.getElementById("cycle").innerText.trim();
     }
 
-    // Convert cycle letters to piece notation
+    
     const pieceNotation = getPieceNotation(cycleData);
 
     if (!pieceNotation) {
@@ -2863,10 +2668,10 @@ function copyCyclePositions(originId = "none") {
         return;
     }
 
-    // Add the "?how" prefix to the piece notation
+    
     const formattedData = `?how ${pieceNotation}`;
 
-    // Copy the formatted data to the clipboard
+    
     navigator.clipboard.writeText(formattedData).then(() => {
         console.log("Cycle data copied to clipboard:", formattedData);
     }).catch(err => {
@@ -2890,11 +2695,11 @@ function markLastCommAsBad() {
         return;
     }
 
-    // Set the feedback value to 0 (Bad)
+    
     cycleFeedbackMap.set(cycleLetters, 0);
 
     console.log(`Marked "${cycleLetters}" as Bad.`);
-    updateFeedbackResults(); // Update the results view
+    updateFeedbackResults(); 
 }
 
 function markLastCommAsGood() {
@@ -2911,25 +2716,25 @@ function markLastCommAsGood() {
         return;
     }
 
-    // Set the feedback value to 1 (Good)
+    
     cycleFeedbackMap.set(cycleLetters, 1);
 
     console.log(`Marked "${cycleLetters}" as Good.`);
-    updateFeedbackResults(); // Update the results view
+    updateFeedbackResults(); 
 }
 
 document.getElementById("clearUserAlgsButton").addEventListener("click", function () {
     const userDefinedAlgs = document.getElementById("userDefinedAlgs");
-    userDefinedAlgs.value = ""; // Clear the textarea
+    userDefinedAlgs.value = ""; 
     console.log("User-defined algs cleared.");
 });
 
-let fetchedAlgs = []; // Array to store fetched algorithms
+let fetchedAlgs = []; 
 
-// Label to display the last fetch date
+
 const lastFetchLabel = document.getElementById("lastFetchLabel");
 
-// Load cached algorithms and fetch date from localStorage
+
 function loadCachedAlgs() {
     const cachedAlgs = localStorage.getItem("fetchedAlgs");
     const lastFetchDate = localStorage.getItem("lastFetchDate");
@@ -2959,7 +2764,7 @@ function loadFetchedAlgs() {
     if (cachedAlgs && lastFetchDate) {
         fetchedAlgs = JSON.parse(cachedAlgs);
         lastFetchLabel.innerHTML = `<span style="color: #00FF00; font-size: 20px;">Last Fetch: ${lastFetchDate}</span>`;
-      //  console.log("Fetched algorithms loaded:", fetchedAlgs);
+      
     } else {
         fetchedAlgs = [];
         lastFetchLabel.innerHTML = `<span style="color: red; font-size: 30px;">NO ALGS</span>`;
@@ -2973,48 +2778,48 @@ async function fetchAlgs() {
         const text = await res.text();
         console.log("Algorithms fetched successfully. Parsing data...");
 
-        // Parse TSV and extract the first and second columns
+        
         fetchedAlgs = text
-            .split("\n") // Split into rows
-            .map(row => row.split("\t")) // Split each row into columns
-            .filter(columns => columns.length >= 2) // Ensure there are at least two columns
-            .map(columns => ({ key: columns[0].trim(), value: columns[1].trim() })) // Map as key-value pairs and trim whitespace
-            .filter(pair => pair.key !== "" && pair.value !== "" && pair.value !== "\r"); // Prune invalid pairs
+            .split("\n") 
+            .map(row => row.split("\t")) 
+            .filter(columns => columns.length >= 2) 
+            .map(columns => ({ key: columns[0].trim(), value: columns[1].trim() })) 
+            .filter(pair => pair.key !== "" && pair.value !== "" && pair.value !== "\r"); 
 
         console.log("Fetched algorithms:", fetchedAlgs);
-        saveFetchedAlgs(fetchedAlgs); // Save to localStorage
+        saveFetchedAlgs(fetchedAlgs); 
     } catch (err) {
         console.error("Failed to fetch algorithms:", err);
         alert("Failed to fetch algorithms.");
     }
 }
 
-// Load cached algorithms on page load
+
 document.addEventListener("DOMContentLoaded", loadCachedAlgs);
 
-// Add an event listener to the fetch button
+
 document.getElementById("fetchAlgsButton").addEventListener("click", fetchAlgs);
 
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Ensure the grid is hidden on page load
+    
     const selectionGrid = document.getElementById("selectionGrid");
-    selectionGrid.style.display = "none"; // Explicitly set the initial display property
+    selectionGrid.style.display = "none"; 
 });
 
-// Object to store the state of each set (toggled on/off)
+
 const selectedSets = {};
 
-// New state for the inverses toggle
+
 let disableInversesMode = localStorage.getItem(getStorageKey("disableInversesMode")) === "true";
 
 document.getElementById("letterSelector").addEventListener("click", function () {
     const selectionGrid = document.getElementById("selectionGrid");
     
-    // 1. CLEAR PREVIOUS CONTENT (Prevents duplicate buttons/rows)
+    
     selectionGrid.innerHTML = "";
 
-    // --- HEADER (Close Button) ---
+    
     const headerDiv = document.createElement("div");
     headerDiv.style.display = "flex";
     headerDiv.style.justifyContent = "flex-end";
@@ -3029,7 +2834,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     headerDiv.appendChild(closeBtn);
     selectionGrid.appendChild(headerDiv);
 
-    // --- TITLE & SUBTITLE ---
+    
     const titleContainer = document.createElement("div");
     titleContainer.className = "selector-title-container";
 
@@ -3045,12 +2850,12 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     titleContainer.appendChild(subTitle);
     selectionGrid.appendChild(titleContainer);
 
-    // --- ACTION BUTTONS ---
+    
     const actionsDiv = document.createElement("div");
     actionsDiv.style.textAlign = "center";
     actionsDiv.style.marginBottom = "15px";
 
-    // Toggle All Button
+    
     const toggleBtn = document.createElement("button");
     toggleBtn.textContent = "Toggle All Sets";
     toggleBtn.className = "large-button"; 
@@ -3060,7 +2865,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         const anyOn = allKeys.some(k => selectedSets[k]);
         const newState = !anyOn; 
         
-        // Update Visuals
+        
         document.querySelectorAll(".set-btn").forEach(btn => {
             if (!btn.disabled) {
                 btn.classList.toggle("untoggled", !newState);
@@ -3071,14 +2876,14 @@ document.getElementById("letterSelector").addEventListener("click", function () 
             }
         });
         
-        // Update Logic
+        
         fetchedAlgs.forEach(alg => stickerState[alg.key] = newState);
         
         saveSelectedSets();
         saveStickerState();
     });
 
-    // Save & Apply Button
+    
     const applyBtn = document.createElement("button");
     applyBtn.textContent = "Save & apply";
     applyBtn.className = "large-button";
@@ -3092,7 +2897,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     actionsDiv.appendChild(applyBtn);
     selectionGrid.appendChild(actionsDiv);
 
-    // --- LABELS (First target / Second target) ---
+    
     const labelsDiv = document.createElement("div");
     labelsDiv.className = "set-labels-container";
 
@@ -3112,7 +2917,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     labelsDiv.appendChild(rightLabel);
     selectionGrid.appendChild(labelsDiv);
 
-    // --- GENERATE FACE ROWS ---
+    
     const faces = [
         { name: "U", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
         { name: "L", indices: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
@@ -3203,7 +3008,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
 function updateUserDefinedAlgs() {
     console.log("Filtering algorithms based on centralized stickerState...");
 
-    // Filter algs where the specific pair key (e.g. "AB") is NOT false.
+    
     const uniqueAlgs = [...new Set(
         fetchedAlgs
             .filter(pair => stickerState[pair.key] !== false)
@@ -3217,19 +3022,19 @@ function updateUserDefinedAlgs() {
 function filterAlgorithmsVerbose(selectedSetNames, fetchedAlgs, stickerState, selectedSets) {
     console.log("Starting optimized filtering...");
 
-    // Create a Set for active sets for faster lookups
+    
     const activeSets = new Set(selectedSetNames);
 
-    // Filter algorithms in a single pass
+    
     const filteredAlgs = fetchedAlgs.filter(pair => {
-        const isStickerSelected = stickerState[pair.key] ?? true; // Check if the sticker is selected
-        const [firstLetter, secondLetter] = pair.key.split(""); // Split the pair into letters
-        const isSetActive = activeSets.has(firstLetter) || activeSets.has(secondLetter); // Check if either set is active
+        const isStickerSelected = stickerState[pair.key] ?? true; 
+        const [firstLetter, secondLetter] = pair.key.split(""); 
+        const isSetActive = activeSets.has(firstLetter) || activeSets.has(secondLetter); 
 
-        return isStickerSelected && isSetActive; // Include only if both conditions are met
+        return isStickerSelected && isSetActive; 
     });
 
-    // Extract unique algorithm values
+    
     const uniqueAlgs = [...new Set(filteredAlgs.map(pair => pair.value.trim()))];
 
     console.log("Filtered and unique algorithms:", uniqueAlgs);
@@ -3238,50 +3043,46 @@ function filterAlgorithmsVerbose(selectedSetNames, fetchedAlgs, stickerState, se
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    loadStickerState(); // Load sticker state
-    loadSelectedSets(); // Load selected sets
+    loadStickerState(); 
+    loadSelectedSets(); 
 });
 
-const ALL_LETTERS = "AOIEFGHJKLNBPQTSRCDWZ".split(""); // Array of all letters
+const ALL_LETTERS = "AOIEFGHJKLNBPQTSRCDWZ".split(""); 
 
-// Predefined excluded trios
+
 const EXCLUDED_TRIOS_CORNERS = [
-    ["A", "E", "R"], // Trio 1
-    ["O", "Q", "N"], // Trio 2
-    ["I", "J", "F"], // Trio 3
-    ["C", "G", "L"], // Trio 4
-    ["D", "K", "P"], // Trio 5
-    ["W", "B", "T"], // Trio 6
-    ["Z", "S", "H"], // Trio 7
-    ["U", "Y", "M"], // buffer
+    ["A", "E", "R"], 
+    ["O", "Q", "N"], 
+    ["I", "J", "F"], 
+    ["C", "G", "L"], 
+    ["D", "K", "P"], 
+    ["W", "B", "T"], 
+    ["Z", "S", "H"], 
+    ["U", "Y", "M"], 
 ];
 
 const EXCLUDED_DUOS_EDGES = [
-    ["A", "Q"], // Duo 1
-    ["O", "M"], // Duo 2
-    ["I", "E"], // Duo 3
-    ["F", "L"], // Duo 4
-    ["G", "Z"], // Duo 5
-    ["H", "R"], // Duo 6
-    ["J", "P"], // Duo 7
-    ["K", "C"], // Duo 7
-    ["N", "T"], // Duo 7
-    ["B", "D"], // Duo 7
-    ["S", "W"], // Duo 7
-    ["U", "Y"], // buffer
+    ["A", "Q"], 
+    ["O", "M"], 
+    ["I", "E"], 
+    ["F", "L"], 
+    ["G", "Z"], 
+    ["H", "R"], 
+    ["J", "P"], 
+    ["K", "C"], 
+    ["N", "T"], 
+    ["B", "D"], 
+    ["S", "W"], 
+    ["U", "Y"], 
 ];
 
 function findMissingCombinations(selectedLetter, algs) {
-    // Generate all possible pairs for the selected letter
     const allCombinations = ALL_LETTERS.map(letter => `${selectedLetter}${letter}`)
-        .concat(ALL_LETTERS.map(letter => `${letter}${selectedLetter}`)) // Include both positions
-        .filter(combination => combination[0] !== combination[1]) // Skip pairs where both letters are the same
-        .filter(combination => !isExcludedCombination(combination)); // Skip excluded combinations
+        .concat(ALL_LETTERS.map(letter => `${letter}${selectedLetter}`)) 
+        .filter(combination => combination[0] !== combination[1]) 
+        .filter(combination => !isExcludedCombination(combination)); 
 
-    // Extract existing combinations from the fetched algs
     const existingCombinations = algs.map(pair => pair.key);
-
-    // Find missing combinations
     const missingCombinations = allCombinations.filter(combination => !existingCombinations.includes(combination));
 
     return missingCombinations;
@@ -3290,123 +3091,81 @@ function findMissingCombinations(selectedLetter, algs) {
 function isExcludedCombination(combination) {
     const currentExclusions = determineCycleType() === "corner" ? EXCLUDED_TRIOS_CORNERS : EXCLUDED_DUOS_EDGES;
 
-    // Check if the combination belongs to any excluded trio or duo
     for (const group of currentExclusions) {
         const [letter1, letter2] = combination.split("");
         if (group.includes(letter1) && group.includes(letter2)) {
-            return true; // Exclude the combination
+            return true; 
         }
     }
-    return false; // Include the combination
-}
-
-async function filterAlgsByLetter(selectedLetter) {
-    if (!selectedLetter) {
-        console.warn("No letter selected.");
-        return;
-    }
-
-    // Fetch algs if the array is empty
-    if (fetchedAlgs.length === 0) {
-        console.log("Fetching algorithms as fetchedAlgs is empty...");
-        await fetchAlgs();
-    }
-
-    // Filter the fetchedAlgs array for keys that match the selected letter
-    const filteredValues = fetchedAlgs
-        .filter(pair => pair.key.startsWith(selectedLetter) || pair.key.endsWith(selectedLetter))
-        .map(pair => pair.value.trim()); // Extract only the values and trim whitespace
-
-    // Paste the filtered values into the input box
-    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
-    userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
-    console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
-
-    // Check for missing combinations if the filtered values are less than 36
-    const missingCommsLabel = document.getElementById("missingCommsLabel");
-    if (filteredValues.length < 36) {
-        const missingCombinations = findMissingCombinations(selectedLetter, fetchedAlgs);
-        console.log(`Missing combinations for "${selectedLetter}":`, missingCombinations);
-
-        if (missingCombinations.length > 0) {
-            // Update the dynamic label with missing combinations
-            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span> <span style="color: red;">${missingCombinations.join(", ")}</span>`;
-        } else {
-            // Clear the label if there are no missing combinations
-            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
-        }
-    } else {
-        // Clear the label if there are no missing combinations
-        missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
-    }
+    return false; 
 }
 
 document.getElementById("connectSmartCubeReplica").addEventListener("click", function () {
-    document.getElementById("connectSmartCube").click(); // Simulate a click on the original button
+    document.getElementById("connectSmartCube").click(); 
 });
 
-const stickerState = {}; // Shared state for all stickers
+const stickerState = {}; 
 
-// Add right-click event listener to grid buttons
+
 document.querySelectorAll(".gridButton").forEach(button => {
-    const setName = button.dataset.letter; // Get the set name from the button's data attribute
+    const setName = button.dataset.letter; 
 
     button.addEventListener("contextmenu", function (event) {
-        event.preventDefault(); // Prevent the default context menu
+        event.preventDefault(); 
 
-        // Show the pair selection grid
+        
         showPairSelectionGrid(setName);
     });
 
     button.addEventListener("touchstart", function (event) {
-        // Handle long press for mobile
+        
         let timeout = setTimeout(() => {
             showPairSelectionGrid(setName);
-        }, 500); // Long press duration
+        }, 500); 
 
         button.addEventListener("touchend", () => clearTimeout(timeout), { once: true });
     });
 });
 
-// Function to show the pair selection grid
+
 function showPairSelectionGrid(setName) {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
     const leftPairGrid = document.getElementById("leftPairGrid");
     const rightPairGrid = document.getElementById("rightPairGrid");
     const pairSelectionTitle = document.getElementById("pairSelectionTitle");
 
-    // Update the title
+    
     pairSelectionTitle.textContent = `Select Pairs for Letter ${setName}`;
 
-    // Clear the grids
+    
     leftPairGrid.innerHTML = "";
     rightPairGrid.innerHTML = "";
 
-    // 1. REPLACEMENT: Use dynamic scheme letters instead of ALL_LETTERS
+    
     const activeLetters = getActiveSchemeLetters(); 
 
-    // Generate all pairs for the selected letter
+    
     const pairs = activeLetters.map(letter => `${setName}${letter}`)
-        .concat(activeLetters.map(letter => `${letter}${setName}`)) // Include both positions
-        .filter(pair => pair[0] !== pair[1]) // Skip pairs where both letters are the same
-        .filter(pair => !isExcludedCombination(pair)) // Skip excluded combinations
-        .sort(customComparator); // Sort using the custom comparator
+        .concat(activeLetters.map(letter => `${letter}${setName}`)) 
+        .filter(pair => pair[0] !== pair[1]) 
+        .filter(pair => !isExcludedCombination(pair)) 
+        .sort(customComparator); 
 
-    // Initialize state for each sticker if not already done
+    
     pairs.forEach(pair => {
         if (!(pair in stickerState)) {
-            stickerState[pair] = true; // Default to toggled (selected)
+            stickerState[pair] = true; 
         }
     });
 
-    // Group stickers by color
+    
     const colorGroups = {};
     pairs.forEach(pair => {
-        // Determine the "face" color based on the letter that ISN'T the setName
-        // (e.g. For Set A, pair AB: Color is determined by B)
+        
+        
         const colorLetter = pair[0] === setName ? pair[1] : pair[0];
         
-        // Get color definition, default to grey
+        
         const { background } = LETTER_COLORS[colorLetter] || { background: "grey" }; 
         
         if (!colorGroups[background]) {
@@ -3415,7 +3174,7 @@ function showPairSelectionGrid(setName) {
         colorGroups[background].push(pair);
     });
 
-    // Create rows for each color group
+    
     Object.keys(colorGroups).forEach(colorName => {
         const leftRow = document.createElement("div");
         const rightRow = document.createElement("div");
@@ -3425,39 +3184,39 @@ function showPairSelectionGrid(setName) {
         colorGroups[colorName].forEach(pair => {
             const button = document.createElement("button");
             
-            // 2. REPLACEMENT: Use CSS classes instead of inline styles
-            button.classList.add("pairButton"); // Base styling
             
-            // Add a specific class for the color (e.g., "sticker-red", "sticker-white")
-            // We sanitize the colorName just in case (remove spaces, lowercase)
+            button.classList.add("pairButton"); 
+            
+            
+            
             const safeColorName = colorName.toLowerCase().replace(/\s+/g, '-');
             button.classList.add(`sticker-${safeColorName}`); 
 
             button.textContent = pair;
             button.dataset.pair = pair; 
 
-            // Apply the untoggled state class if needed
+            
             if (!stickerState[pair]) {
                 button.classList.add("untoggled");
             }
 
-            // Determine if the button is on the left or right side
+            
             const isLeftSide = pair.startsWith(setName);
 
-            // Add click event listener
+            
             button.addEventListener("click", () => {
                 const newState = !stickerState[pair];
 
-                // Rule 1: Always toggle the state of the clicked button
+                
                 stickerState[pair] = newState;
                 button.classList.toggle("untoggled", !newState);
 
-                // Rule 2: If a left-side button is clicked, also toggle the right-side counterpart
+                
                 if (isLeftSide) {
                     const reversePair = `${pair[1]}${pair[0]}`;
-                    stickerState[reversePair] = newState; // Sync the state
+                    stickerState[reversePair] = newState; 
 
-                    // Find and visually update the corresponding right-side button
+                    
                     const reverseButton = document.querySelector(`.pairButton[data-pair="${reversePair}"]`);
                     if (reverseButton) {
                         if (newState) {
@@ -3471,7 +3230,7 @@ function showPairSelectionGrid(setName) {
                 saveStickerState(); 
             });
 
-            // Append the button to the appropriate row
+            
             if (isLeftSide) {
                 leftRow.appendChild(button);
             } else {
@@ -3479,7 +3238,7 @@ function showPairSelectionGrid(setName) {
             }
         });
 
-        // Append rows to the appropriate columns
+        
         if (leftRow.children.length > 0) {
             leftPairGrid.appendChild(leftRow);
         }
@@ -3488,20 +3247,20 @@ function showPairSelectionGrid(setName) {
         }
     });
 
-    // Show the grid
+    
     pairSelectionGrid.style.display = "block";
 }
 
-// Add event listener to the "Apply Selection" button
+
 document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
-    pairSelectionGrid.style.display = "none"; // Hide the grid
+    pairSelectionGrid.style.display = "none"; 
 
-    // Save the updated sticker state
+    
     saveStickerState();
     console.log("Updated sticker state:", stickerState);
 
-    // Update the user-defined algorithms based on the new sticker state
+    
     updateUserDefinedAlgs();
 });
 
@@ -3514,15 +3273,15 @@ function loadSelectedSets() {
     const savedSets = localStorage.getItem(getStorageKey("selectedSets"));
     if (savedSets) {
         Object.assign(selectedSets, JSON.parse(savedSets));
-    //    console.log(`Selected sets loaded for ${currentMode}:`, selectedSets);
+    
 
-        // Update the visual state of the grid buttons
+        
         document.querySelectorAll(".gridButton").forEach(button => {
             const setName = button.dataset.letter;
             button.classList.toggle("untoggled", !selectedSets[setName]);
         });
     } else {
-        // Reset selectedSets if no saved data exists for the current mode
+        
         Object.keys(selectedSets).forEach(setName => {
             selectedSets[setName] = false;
         });
@@ -3538,7 +3297,7 @@ function loadStickerState() {
     const savedState = localStorage.getItem(getStorageKey("stickerState"));
     if (savedState) {
         Object.assign(stickerState, JSON.parse(savedState));
-   //     console.log("Sticker state loaded:", stickerState);
+   
     }
 }
 
@@ -3553,22 +3312,22 @@ function bindApplyButton() {
     const applyButton = document.getElementById("applySelectionsButton");
     if (applyButton) {
         applyButton.addEventListener("click", function () {
-            // Get the pair selection grid element
+            
             const pairSelectionGrid = document.getElementById("pairSelectionGrid");
 
-            // If the pair selection grid is currently displayed, handle its closure and save its state first.
+            
             if (pairSelectionGrid && pairSelectionGrid.style.display !== "none") {
-                pairSelectionGrid.style.display = "none"; // Hide the grid
-                saveStickerState(); // Save the state of the selections made in the pair grid
+                pairSelectionGrid.style.display = "none"; 
+                saveStickerState(); 
                 console.log("Pair selection grid closed and state saved.");
             }
 
-            // Continue with the original logic for the "applySelectionsButton"
+            
             console.log("Applying set/sticker selections to textbox...");
-            updateUserDefinedAlgs(); // This populates the textbox based on the combined set and sticker selections.
-     //       alert("Textbox updated with your selections.");
+            updateUserDefinedAlgs(); 
+     
 
-            // Hide the main selection grid after applying
+            
             const selectionGrid = document.getElementById("selectionGrid");
             if (selectionGrid) {
                 selectionGrid.style.display = "none";
@@ -3577,43 +3336,36 @@ function bindApplyButton() {
     }
 }
 
-function pressApplySelectionButton() {
-    const applySelectionButton = document.getElementById("applyPairSelectionButton");
-    if (applySelectionButton) {
-        applySelectionButton.click(); // Simulate a click on the "Apply Selection" button
-    }
-}
-
 function determineCycleType() {
-    return currentMode; // Return "corner" or "edge" based on the toggle state
+    return currentMode; 
 }
 
 function getPieceNotation(cycleLetters) {
-    const cycleType = determineCycleType(); // Determine the cycle type based on the current page
+    const cycleType = determineCycleType(); 
     if (!cycleType) {
         alert("Invalid cycle type. Please check the page.");
         return null;
     }
 
-    const buffer = cycleType === "edge" ? "UF" : "UFR"; // Use different buffers for edge and corner cycles
-    const pieceMap = cycleType === "edge" ? EDGE_PIECE_MAP : CORNER_PIECE_MAP; // Use the appropriate map
+    const buffer = cycleType === "edge" ? "UF" : "UFR"; 
+    const pieceMap = cycleType === "edge" ? EDGE_PIECE_MAP : CORNER_PIECE_MAP; 
 
-    // Map each letter to its piece notation
+    
     const pieces = cycleLetters.split("").map(letter => pieceMap[letter]);
 
     if (pieces.includes(undefined)) {
         console.warn("Missing mapping for one or more letters:", cycleLetters);
-        return null; // Return null if any letter is missing in the map
+        return null; 
     }
 
-    // Combine the buffer and pieces into the final notation
+    
     return [buffer, ...pieces].join(" ");
 }
 
-// Add event listener to the cycle letters element
+
 document.getElementById("cycle").addEventListener("click", function () {
-    const cycleLetters = this.textContent.trim(); // Get the displayed cycle letters
-    const pieceNotation = getPieceNotation(cycleLetters); // Get the piece notation
+    const cycleLetters = this.textContent.trim(); 
+    const pieceNotation = getPieceNotation(cycleLetters); 
 
     if (!pieceNotation) {
         alert("Missing piece notation for one or more letters.");
@@ -3622,7 +3374,7 @@ document.getElementById("cycle").addEventListener("click", function () {
 
     const formattedData = `?how ${pieceNotation}`;
 
-    // Copy the piece notation to the clipboard
+    
     navigator.clipboard.writeText(formattedData).then(() => {
         console.log("Piece notation copied to clipboard:", pieceNotation);
     }).catch(err => {
@@ -3637,28 +3389,28 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!existingResetButton) {
         const resetButton = document.createElement("button");
         resetButton.textContent = "Reset All Sets and Stickers";
-        resetButton.className = "reset-button"; // Use the CSS class
+        resetButton.className = "reset-button"; 
         resetButton.addEventListener("click", () => {
-            // Reset all sets to toggled state
+            
             Object.keys(selectedSets).forEach(setName => {
-                selectedSets[setName] = true; // Toggle all sets on
+                selectedSets[setName] = true; 
             });
 
-            // Reset all stickers to toggled state using updateStickerState
-            const allStickerKeys = Object.keys(stickerState); // Get all sticker keys
-            updateStickerState(allStickerKeys); // Pass all keys to updateStickerState
+            
+            const allStickerKeys = Object.keys(stickerState); 
+            updateStickerState(allStickerKeys); 
 
-            // Update the visual state of the buttons
+            
             document.querySelectorAll(".gridButton").forEach(button => {
                 const setName = button.dataset.letter;
-                button.classList.remove("untoggled"); // Ensure all sets are visually toggled on
+                button.classList.remove("untoggled"); 
             });
 
-            // Save the updated states
+            
             saveSelectedSets();
 
-            // Update the user-defined algorithms
-       //     updateUserDefinedAlgs();
+            
+       
 
             console.log("All sets and stickers reset to toggled state.");
         });
@@ -3669,38 +3421,38 @@ document.addEventListener("DOMContentLoaded", function () {
 function updateStickerState(keysWithValues) {
     console.log("Updating sticker state...");
 
-    // Set all stickers to false first
+    
     Object.keys(stickerState).forEach(key => {
         stickerState[key] = false;
     });
 
-    // Update the global sticker state for keys with non-empty values
+    
     keysWithValues.forEach(key => {
         stickerState[key] = true;
     });
 
     console.log("Updated sticker state:", stickerState);
 
-    // Save the updated sticker state
+    
     saveStickerState();
 }
 
 const drillingModeToggle = document.getElementById("drillingModeToggle");
 const drillingModeLabel = document.getElementById("drillingModeLabel");
 
-// Default to "Regular" mode if no mode is saved in localStorage
+
 const savedDrillingMode = localStorage.getItem("drillingMode") === "true";
 let isDrillingMode = savedDrillingMode;
 
-// Set the initial state of the toggle and label
+
 drillingModeToggle.checked = isDrillingMode;
 drillingModeLabel.textContent = isDrillingMode ? "Drilling" : "Regular";
 
-// Add an event listener to handle toggle changes
+
 drillingModeToggle.addEventListener("change", function () {
-    isDrillingMode = this.checked; // Update the mode
-    localStorage.setItem("drillingMode", isDrillingMode); // Save the mode to localStorage
-    drillingModeLabel.textContent = isDrillingMode ? "Drilling" : "Regular"; // Update the label text
+    isDrillingMode = this.checked; 
+    localStorage.setItem("drillingMode", isDrillingMode); 
+    drillingModeLabel.textContent = isDrillingMode ? "Drilling" : "Regular"; 
 
     console.log(`Drilling Mode switched to: ${isDrillingMode ? "Drilling" : "Regular"}`);
 });
@@ -3719,12 +3471,12 @@ async function fetchAndApplyPartialFilter() {
             return;
         }
 
-        // Get the commutators (the 'value' part of the pairs)
+        
         const commutators = partialList
             .map(pair => pair.value.trim())
             .filter(comm => comm !== "");
 
-        // Directly update the userDefinedAlgs textbox
+        
         document.getElementById("userDefinedAlgs").value = commutators.join("\n");
 
         console.log(`Textbox populated with ${commutators.length} algs from the partial sheet.`);
@@ -3736,51 +3488,6 @@ async function fetchAndApplyPartialFilter() {
     }
 }
 
-function reloadAlgorithmsBasedOnStickers() {
-    console.log("Reloading algorithms based on selected stickers...");
-
-    // Gather all active stickers
-    const activeStickers = Object.keys(stickerState).filter(pair => stickerState[pair]);
-
-    // Filter the fetched algorithms to match the active stickers
-    const matchingComms = fetchedAlgs.filter(pair => activeStickers.includes(pair.key));
-
-    // Extract the commutators (values) and update the userDefinedAlgs textbox
-    const commutators = matchingComms.map(pair => pair.value.trim());
-    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
-    userDefinedAlgs.value = commutators.join("\n"); // Combine all commutators into a single string
-
-    console.log("Updated user-defined algorithms:", commutators);
-}
-
-function updateSetAndStickerStatePartial() {
-    console.log("Updating set selection state based on sticker state...");
-
-    // Step 1: Turn off all sets
-    Object.keys(selectedSets).forEach(setName => {
-        selectedSets[setName] = false;
-    });
-
-    // Step 2: Iterate through the stickerState and turn on sets with active stickers
-    Object.keys(stickerState).forEach(pair => {
-        if (stickerState[pair]) { // If the sticker is active (true)
-            const [firstLetter, secondLetter] = pair.split(""); // Split the pair into individual letters
-
-            // Turn on the sets for both letters
-            selectedSets[firstLetter] = true;
-            selectedSets[secondLetter] = true;
-        }
-    });
-
-    // Step 3: Save the updated set state
-    saveSelectedSets();
-
-    console.log("Set selection state updated:", selectedSets);
-
-    // Step 4: Reload algorithms based on the updated sticker state
-    reloadAlgorithmsBasedOnStickers();
-}
-
 async function fetchAlgorithms(proxyUrl) {
     try {
         const response = await fetch(proxyUrl);
@@ -3789,13 +3496,13 @@ async function fetchAlgorithms(proxyUrl) {
         }
         const text = await response.text();
 
-        // Parse TSV and extract key-value pairs
+        
         return text
-            .split("\n") // Split into rows
-            .map(row => row.split("\t")) // Split each row into columns
-            .filter(columns => columns.length >= 2) // Ensure there are at least two columns
-            .map(columns => ({ key: columns[0].trim(), value: columns[1].trim() })) // Map as key-value pairs
-            .filter(pair => pair.key !== "" && pair.value !== "" && pair.value !== "\r"); // Prune invalid pairs
+            .split("\n") 
+            .map(row => row.split("\t")) 
+            .filter(columns => columns.length >= 2) 
+            .map(columns => ({ key: columns[0].trim(), value: columns[1].trim() })) 
+            .filter(pair => pair.key !== "" && pair.value !== "" && pair.value !== "\r"); 
     } catch (error) {
         console.error("Error fetching algorithms:", error);
         return [];
@@ -3815,37 +3522,37 @@ function showSuccessFeedback() {
     const body = document.body;
     const timerElement = document.getElementById("timer");
 
-    // 1. Add the CSS class to the body to trigger the green background flash
+    
     body.classList.add("solve-success-flash");
 
-    // 2. Change the timer's text color for extra reinforcement
-   // timerElement.style.color = "#66bb6a"; // A lighter, vibrant green
+    
+   
 
-    // 3. Set a timer to automatically remove the feedback after a short duration
+    
     setTimeout(() => {
-        body.classList.remove("solve-success-flash"); // Revert background
-  //      timerElement.style.color = "white";             // Revert timer color
-    }, 400); // The feedback will be visible for 350 milliseconds (0.35s)
+        body.classList.remove("solve-success-flash"); 
+  
+    }, 400); 
 }
 
-// 1. Get the new checkbox element from the DOM
+
 const visualFeedbackCheckbox = document.getElementById("visualFeedbackCheckbox");
 
-// 2. Load the saved state from localStorage. Default to 'true' (enabled) if it's not set.
-// Note: We are now defaulting it to true, so users see the new feature immediately.
+
+
 const savedVisualFeedback = localStorage.getItem("visualFeedbackEnabled");
 let isVisualFeedbackEnabled = savedVisualFeedback === null ? true : savedVisualFeedback === "true";
 
-// 3. Set the initial state of the checkbox to match what we loaded
-visualFeedbackCheckbox.checked = isVisualFeedbackEnabled;
-localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled); // Save default if it was null
 
-// 4. Add an event listener to handle when the user clicks the checkbox
+visualFeedbackCheckbox.checked = isVisualFeedbackEnabled;
+localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled); 
+
+
 visualFeedbackCheckbox.addEventListener("change", function () {
-    // Update our global variable with the new state
+    
     isVisualFeedbackEnabled = this.checked;
     
-    // Save the new state to localStorage so it's remembered
+    
     localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled);
 
     console.log(`Visual feedback flash switched to: ${isVisualFeedbackEnabled ? "enabled" : "disabled"}`);
@@ -3862,7 +3569,7 @@ function applySchemeFromGrid() {
     inputs.forEach(input => {
         const index = parseInt(input.getAttribute('data-index'));
         
-        // If the input is a center (disabled), we preserve the EXISTING value 
+        
         if (CENTER_INDICES.includes(index)) {
              newMap[index] = POSITION_TO_LETTER_MAP[index] || DEFAULT_POSITION_TO_LETTER_MAP[index];
         } else {
@@ -3876,9 +3583,6 @@ function applySchemeFromGrid() {
     return newMap;
 }
 
-/**
- * Populates the visual grid from a map object.
- */
 function populateGridFromScheme(schemeMap) {
     if (!schemeMap) return;
 
@@ -3889,7 +3593,7 @@ function populateGridFromScheme(schemeMap) {
         const val = schemeMap[index];
         
         if (val !== undefined) {
-            // Only update editable fields (non-centers)
+            
             if (!input.disabled) {
                 input.value = val;
             }
@@ -3897,9 +3601,6 @@ function populateGridFromScheme(schemeMap) {
     });
 }
 
-/**
- * Event Listener: Save Custom Scheme
- */
 const saveSchemeButton = document.getElementById("saveLetterScheme");
 if (saveSchemeButton) {
     saveSchemeButton.addEventListener("click", function () {
@@ -3915,18 +3616,12 @@ if (saveSchemeButton) {
     });
 }
 
-/**
- * Event Listener: Speffz Scheme
- */
 const speffzSchemeButton = document.getElementById("speffzLetterScheme");
 if (speffzSchemeButton) {
     speffzSchemeButton.addEventListener("click", function () {
         if (confirm("Load standard Speffz scheme?")) {
-            // Update Internal Map
             Object.assign(POSITION_TO_LETTER_MAP, SPEFFZ_LETTER_MAP);
-            // Update Visual Grid
             populateGridFromScheme(SPEFFZ_LETTER_MAP);
-            // Save immediately so it persists on reload
             localStorage.setItem("customLetterSchemeJSON", JSON.stringify(SPEFFZ_LETTER_MAP));
         }
     });
@@ -3936,11 +3631,8 @@ const hanusSchemeButton = document.getElementById("hanusLetterScheme");
 if (hanusSchemeButton) {
     hanusSchemeButton.addEventListener("click", function () {
         if (confirm("Load gigachad Hanuś scheme?")) {
-            // Update Internal Map
             Object.assign(POSITION_TO_LETTER_MAP, HANUS_LETTER_MAP);
-            // Update Visual Grid
             populateGridFromScheme(HANUS_LETTER_MAP);
-            // Save immediately so it persists on reload
             localStorage.setItem("customLetterSchemeJSON", JSON.stringify(HANUS_LETTER_MAP));
         }
     });
@@ -3951,24 +3643,17 @@ if (kacperSchemeButton) {
     kacperSchemeButton.addEventListener("click", function () {
         if (confirm("Load Kacper's lettering scheme?")) {
             localStorage.removeItem("customLetterSchemeJSON");
-            
-            // Revert global map
             Object.assign(POSITION_TO_LETTER_MAP, DEFAULT_POSITION_TO_LETTER_MAP);
-            
-            // Revert visual grid
             populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
-            
+
             alert("Set to Kacper's scheme.");
         }
     });
 }
 
-/**
- * Initialization
- */
 document.addEventListener("DOMContentLoaded", function () {
     const savedJSON = localStorage.getItem("customLetterSchemeJSON");
-    
+
     if (savedJSON) {
         try {
             const savedMap = JSON.parse(savedJSON);
@@ -3980,7 +3665,6 @@ document.addEventListener("DOMContentLoaded", function () {
             populateGridFromScheme(DEFAULT_POSITION_TO_LETTER_MAP);
         }
     } else {
-        // Fallback for backward compatibility
         const oldString = localStorage.getItem("customLetterScheme");
         if (oldString && oldString.length === 54) {
              console.log("Old string format detected but ignored. Please re-save.");
@@ -3995,46 +3679,28 @@ function getActiveSchemeLetters() {
     const letters = new Set();
 
     indices.forEach(index => {
-        // Get letter from map, default to empty if undefined
         let char = POSITION_TO_LETTER_MAP[index];
-        // Clean up (handle empty strings, dashes, or undefined)
         if (char && char.trim() !== "" && char !== "-") {
             letters.add(char.trim());
         }
     });
 
-    // Return sorted unique letters
     return Array.from(letters).sort();
 }
 
-/**
- * Handles clicking a Set Button.
- * @param {HTMLElement} button - The clicked button
- * @param {string} letter - The letter (e.g. "A")
- * @param {string} position - 'first' (A_) or 'second' (_A)
- */
 function handleGridButtonClick(button, letter, position) {
-    // Construct a unique key for selectedSets (e.g., "A_" or "_A")
     const setKey = position === 'first' ? `${letter}_` : `_${letter}`;
-    
-    // 1. Toggle Visual State
     const newState = !selectedSets[setKey];
     selectedSets[setKey] = newState;
     
-    // Update Button Appearance
     button.classList.toggle("untoggled", !newState);
     saveSelectedSets();
 
-    // 2. Batch Update stickerState
     if (fetchedAlgs.length > 0) {
         let changedCount = 0;
         fetchedAlgs.forEach(item => {
-            const key = item.key; // e.g., "AB"
+            const key = item.key;
             if (key.length < 2) return;
-
-            // Logic: 
-            // If we clicked "A_", we change pairs starting with A.
-            // If we clicked "_A", we change pairs ending with A.
             if (position === 'first' && key[0] === letter) {
                 stickerState[key] = newState;
                 changedCount++;
