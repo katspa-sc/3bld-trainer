@@ -3011,70 +3011,63 @@ let disableInversesMode = localStorage.getItem(getStorageKey("disableInversesMod
 document.getElementById("letterSelector").addEventListener("click", function () {
     const selectionGrid = document.getElementById("selectionGrid");
     
-    // 1. CLEAR EVERYTHING
+    // 1. CLEAR PREVIOUS CONTENT (Prevents duplicate buttons/rows)
     selectionGrid.innerHTML = "";
 
-    // --- BUILD HEADER (Checkbox & Close) ---
+    // --- HEADER (Close Button) ---
     const headerDiv = document.createElement("div");
     headerDiv.style.display = "flex";
-    headerDiv.style.justifyContent = "space-between";
-    headerDiv.style.alignItems = "center";
-    headerDiv.style.marginBottom = "10px";
-    headerDiv.style.color = "white";
+    headerDiv.style.justifyContent = "flex-end";
+    headerDiv.style.padding = "0 0 5px 0";
 
-    // Disable Inverses Checkbox
-    const checkboxWrapper = document.createElement("div");
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.id = "disableInversesCheckbox";
-    checkbox.checked = disableInversesMode;
-    checkbox.style.transform = "scale(1.3)";
-    checkbox.style.marginRight = "8px";
-    checkbox.addEventListener("change", function() {
-        disableInversesMode = this.checked;
-        localStorage.setItem(getStorageKey("disableInversesMode"), disableInversesMode);
-    });
-    
-    const label = document.createElement("label");
-    label.textContent = "Disable Inverses (e.g. disabling 'A' also disables 'BA')";
-    label.htmlFor = "disableInversesCheckbox";
-    
-    checkboxWrapper.appendChild(checkbox);
-    checkboxWrapper.appendChild(label);
-    headerDiv.appendChild(checkboxWrapper);
-
-    // Close Button
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "X";
-    closeBtn.style.backgroundColor = "red";
+    closeBtn.className = "close-button close-set"; 
+    closeBtn.style.backgroundColor = "#dc3545"; 
     closeBtn.style.color = "white";
-    closeBtn.style.border = "none";
-    closeBtn.style.padding = "5px 10px";
-    closeBtn.style.cursor = "pointer";
     closeBtn.addEventListener("click", () => selectionGrid.style.display = "none");
     headerDiv.appendChild(closeBtn);
-
     selectionGrid.appendChild(headerDiv);
 
-    // --- BUILD ACTION BUTTONS ---
+    // --- TITLE & SUBTITLE ---
+    const titleContainer = document.createElement("div");
+    titleContainer.className = "selector-title-container";
+
+    const mainTitle = document.createElement("h2");
+    mainTitle.textContent = "Select sets to practice";
+    mainTitle.className = "selector-main-title";
+
+    const subTitle = document.createElement("p");
+    subTitle.textContent = "Inverses are separated for easier control";
+    subTitle.className = "selector-sub-title";
+
+    titleContainer.appendChild(mainTitle);
+    titleContainer.appendChild(subTitle);
+    selectionGrid.appendChild(titleContainer);
+
+    // --- ACTION BUTTONS ---
     const actionsDiv = document.createElement("div");
     actionsDiv.style.textAlign = "center";
     actionsDiv.style.marginBottom = "15px";
 
-    // Toggle All
+    // Toggle All Button
     const toggleBtn = document.createElement("button");
     toggleBtn.textContent = "Toggle All Sets";
     toggleBtn.className = "large-button"; 
     toggleBtn.style.marginRight = "10px";
     toggleBtn.addEventListener("click", () => {
-        const allToggled = Object.values(selectedSets).every(s => s);
-        const newState = !allToggled;
+        const allKeys = Object.keys(selectedSets);
+        const anyOn = allKeys.some(k => selectedSets[k]);
+        const newState = !anyOn; 
         
         // Update Visuals
-        Object.keys(selectedSets).forEach(k => selectedSets[k] = newState);
-        document.querySelectorAll(".gridButton").forEach(btn => {
-            if (!btn.disabled) { // Don't toggle buffers
+        document.querySelectorAll(".set-btn").forEach(btn => {
+            if (!btn.disabled) {
                 btn.classList.toggle("untoggled", !newState);
+                const letter = btn.dataset.letter;
+                const pos = btn.dataset.position; 
+                const setKey = pos === 'first' ? `${letter}_` : `_${letter}`;
+                selectedSets[setKey] = newState;
             }
         });
         
@@ -3085,11 +3078,11 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         saveStickerState();
     });
 
-    // Apply Button
+    // Save & Apply Button
     const applyBtn = document.createElement("button");
-    applyBtn.textContent = "Apply Selections";
+    applyBtn.textContent = "Save & apply";
     applyBtn.className = "large-button";
-    applyBtn.style.backgroundColor = "#28a745"; // Green
+    applyBtn.style.backgroundColor = "#28a745"; 
     applyBtn.addEventListener("click", () => {
         updateUserDefinedAlgs();
         selectionGrid.style.display = "none";
@@ -3099,23 +3092,28 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     actionsDiv.appendChild(applyBtn);
     selectionGrid.appendChild(actionsDiv);
 
-    // --- BUILD THE ALPHABET GRID (BY FACE ROWS) ---
-    
-    // 1. Updated Palette to match Custom Scheme Input Boxes (Standard WCA Colors)
-    const FACE_PALETTE = {
-        "U": { bg: "#FFFFFF", txt: "#000000" }, // Pure White
-        "L": { bg: "#FF5800", txt: "#FFFFFF" }, // WCA Orange
-        "F": { bg: "#009E60", txt: "#FFFFFF" }, // WCA Green
-        "R": { bg: "#C41E3A", txt: "#FFFFFF" }, // WCA Red
-        "B": { bg: "#0051BA", txt: "#FFFFFF" }, // WCA Blue
-        "D": { bg: "#FFD500", txt: "#000000" }  // WCA Yellow
-    };
+    // --- LABELS (First target / Second target) ---
+    const labelsDiv = document.createElement("div");
+    labelsDiv.className = "set-labels-container";
 
-    // 2. Define Buffer Indices (To mark them as disabled)
-    const BUFFER_INDICES = currentMode === "edge" ? [7, 19] : [8, 9, 20];
+    const leftLabel = document.createElement("div");
+    leftLabel.className = "set-label";
+    leftLabel.textContent = "First target";
 
-    // 3. Define Face Order
-    const faceDefinitions = [
+    const spacer = document.createElement("div");
+    spacer.className = "set-label-spacer";
+
+    const rightLabel = document.createElement("div");
+    rightLabel.className = "set-label";
+    rightLabel.textContent = "Second target";
+
+    labelsDiv.appendChild(leftLabel);
+    labelsDiv.appendChild(spacer);
+    labelsDiv.appendChild(rightLabel);
+    selectionGrid.appendChild(labelsDiv);
+
+    // --- GENERATE FACE ROWS ---
+    const faces = [
         { name: "U", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
         { name: "L", indices: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
         { name: "F", indices: [18, 19, 20, 21, 22, 23, 24, 25, 26] },
@@ -3124,77 +3122,77 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         { name: "D", indices: [27, 28, 29, 30, 31, 32, 33, 34, 35] }
     ];
 
-    // Determine valid indices for the current mode
+    const BUFFER_INDICES = currentMode === "edge" ? [7, 19] : [8, 9, 20];
     const validIndices = new Set(currentMode === "corner" ? CORNER_FACELET_INDICES : EDGE_FACELET_INDICES);
-    const displayedLetters = new Set(); 
 
-    faceDefinitions.forEach(face => {
-        // Create a row container
+    faces.forEach(face => {
         const rowDiv = document.createElement("div");
-        rowDiv.style.display = "flex";
-        rowDiv.style.justifyContent = "center";
-        rowDiv.style.flexWrap = "wrap";
-        rowDiv.style.marginBottom = "8px"; 
+        rowDiv.className = "face-row";
+
+        const leftGroup = document.createElement("div");
+        leftGroup.className = "face-group";
+
+        const rightGroup = document.createElement("div");
+        rightGroup.className = "face-group";
+
+        const faceLetters = new Set();
         
         face.indices.forEach(index => {
-            // Check if this index is a valid sticker OR a buffer sticker
             if (validIndices.has(index)) {
                 let letter = POSITION_TO_LETTER_MAP[index];
-                
-                // Allow display if letter exists and hasn't been shown (or is a buffer)
-                if (letter && letter.trim() !== "" && letter !== "-" && !displayedLetters.has(letter)) {
-                    
-                    const btn = document.createElement("button");
-                    btn.className = "gridButton cube-select-button";
-                    btn.textContent = letter;
-                    btn.dataset.letter = letter;
-                    
-                    // --- COLORING LOGIC ---
-                    const isBuffer = BUFFER_INDICES.includes(index);
+                if (letter && letter.trim() !== "" && letter !== "-" && !faceLetters.has(letter)) {
+                    faceLetters.add(letter);
 
-                    if (isBuffer) {
-                        // Buffer Styling: Black/Dark Grey, Disabled
-                        btn.style.backgroundColor = "#222222"; 
-                        btn.style.color = "#777777";
-                        btn.style.border = "1px solid #444";
-                        btn.style.cursor = "default";
-                        btn.disabled = true; 
-                        btn.title = "Buffer Piece";
-                    } else {
-                        // Standard Face Coloring
-                        const palette = FACE_PALETTE[face.name];
-                        btn.style.backgroundColor = palette.bg;
-                        btn.style.color = palette.txt;
-                        
-                        // Track displayed letters to prevent duplicates (only for valid sets)
-                        displayedLetters.add(letter);
+                    const createBtn = (pos) => {
+                        const btn = document.createElement("button");
+                        btn.className = `set-btn face-${face.name}`;
+                        btn.textContent = pos === 'first' ? `${letter}_` : `_${letter}`;
+                        btn.dataset.letter = letter;
+                        btn.dataset.position = pos;
 
-                        // Initial Visual State
-                        if (selectedSets[letter] === undefined) selectedSets[letter] = true;
-                        btn.classList.toggle("untoggled", !selectedSets[letter]);
+                        const isBuffer = BUFFER_INDICES.includes(index);
 
-                        // Interaction Handlers
-                        btn.addEventListener("click", () => handleGridButtonClick(btn, letter));
-                        btn.addEventListener("contextmenu", (e) => {
-                            e.preventDefault();
-                            showPairSelectionGrid(letter);
-                        });
-                        btn.addEventListener("touchstart", () => {
-                            const timer = setTimeout(() => showPairSelectionGrid(letter), 500);
-                            btn.addEventListener("touchend", () => clearTimeout(timer), {once: true});
-                        });
-                    }
+                        if (isBuffer) {
+                            btn.classList.add("buffer");
+                            btn.disabled = true;
+                            btn.title = "Buffer Piece";
+                        } else {
+                            const setKey = pos === 'first' ? `${letter}_` : `_${letter}`;
+                            if (selectedSets[setKey] === undefined) selectedSets[setKey] = true;
+                            
+                            if (!selectedSets[setKey]) {
+                                btn.classList.add("untoggled");
+                            }
 
-                    btn.style.width = "40px";
-                    btn.style.height = "40px";
-                    btn.style.margin = "3px";
+                            btn.addEventListener("click", () => handleGridButtonClick(btn, letter, pos));
+                            
+                            btn.addEventListener("contextmenu", (e) => {
+                                e.preventDefault();
+                                showPairSelectionGrid(letter);
+                            });
+                            
+                            btn.addEventListener("touchstart", () => {
+                                const timer = setTimeout(() => showPairSelectionGrid(letter), 500);
+                                btn.addEventListener("touchend", () => clearTimeout(timer), {once: true});
+                            });
+                        }
+                        return btn;
+                    };
 
-                    rowDiv.appendChild(btn);
+                    leftGroup.appendChild(createBtn('first'));
+                    rightGroup.appendChild(createBtn('second'));
                 }
             }
         });
 
-        if (rowDiv.children.length > 0) {
+        if (leftGroup.children.length > 0) {
+            rowDiv.appendChild(leftGroup);
+            
+            const sep = document.createElement("div");
+            sep.className = "face-separator";
+            rowDiv.appendChild(sep);
+
+            rowDiv.appendChild(rightGroup);
             selectionGrid.appendChild(rowDiv);
         }
     });
@@ -4009,37 +4007,44 @@ function getActiveSchemeLetters() {
     return Array.from(letters).sort();
 }
 
-function handleGridButtonClick(button, setName) {
-    // 1. Toggle the visual state of the Set
-    const newState = !selectedSets[setName];
-    selectedSets[setName] = newState;
+/**
+ * Handles clicking a Set Button.
+ * @param {HTMLElement} button - The clicked button
+ * @param {string} letter - The letter (e.g. "A")
+ * @param {string} position - 'first' (A_) or 'second' (_A)
+ */
+function handleGridButtonClick(button, letter, position) {
+    // Construct a unique key for selectedSets (e.g., "A_" or "_A")
+    const setKey = position === 'first' ? `${letter}_` : `_${letter}`;
     
-    // Update the button appearance
+    // 1. Toggle Visual State
+    const newState = !selectedSets[setKey];
+    selectedSets[setKey] = newState;
+    
+    // Update Button Appearance
     button.classList.toggle("untoggled", !newState);
     saveSelectedSets();
 
-    // 2. Batch Update stickerState (The Logic)
+    // 2. Batch Update stickerState
     if (fetchedAlgs.length > 0) {
+        let changedCount = 0;
         fetchedAlgs.forEach(item => {
             const key = item.key; // e.g., "AB"
             if (key.length < 2) return;
 
-            const firstChar = key[0];
-            const secondChar = key[1];
-
-            // Case A: The pair STARTS with the letter (e.g., "AB") - Always update
-            if (firstChar === setName) {
+            // Logic: 
+            // If we clicked "A_", we change pairs starting with A.
+            // If we clicked "_A", we change pairs ending with A.
+            if (position === 'first' && key[0] === letter) {
                 stickerState[key] = newState;
-            }
-
-            // Case B: The pair ENDS with the letter (e.g., "BA")
-            // Update ONLY if "Disable Inverses" is turned ON.
-            if (disableInversesMode && secondChar === setName) {
+                changedCount++;
+            } else if (position === 'second' && key[1] === letter) {
                 stickerState[key] = newState;
+                changedCount++;
             }
         });
         
         saveStickerState();
-        console.log(`Updated Set ${setName} to ${newState}. Disable Inverses (Dual-update): ${disableInversesMode}`);
+        console.log(`Updated ${setKey}: ${changedCount} algs set to ${newState}`);
     }
 }

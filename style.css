@@ -1,12 +1,19 @@
 html, body {
-    max-height: 100vh; /* Limit the height to the viewport height */
-    overflow-y: auto; /* Enable scrolling if content exceeds the height */
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 body {
   background: #282c34;
   font-family: Arial;
   color: white;
+  /* Animate background color changes (e.g., success flash) */
+  transition: background-color 0.4s ease-in-out;
+}
+
+/* Success Flash State */
+body.solve-success-flash {
+  background-color: #0b4300;
 }
 
 p {
@@ -15,7 +22,7 @@ p {
   color: white;
 }
 
-hr { 
+hr {
   display: block;
   margin-top: 0.5em;
   margin-bottom: 0.5em;
@@ -23,7 +30,7 @@ hr {
   margin-right: auto;
   border-style: inset;
   border-width: 0.5px;
-  border-color:#303030;
+  border-color: #303030;
 }
 
 #timer {
@@ -38,12 +45,12 @@ hr {
 
 p.scramble {
   font-size: 40px;
-  vertical-align: middle; 
+  vertical-align: middle;
   text-align: center;
 }
 
 p.cycle {
-  vertical-align: middle; 
+  vertical-align: middle;
   text-align: center;
   font-size: 40px;
   margin: 0;
@@ -51,92 +58,404 @@ p.cycle {
   margin-bottom: 20px
 }
 
-#feedbackButtons {
-    text-align: center; /* Center the buttons */
-    margin-top: 20px; /* Add some spacing */
+.scramble.obfuscated {
+  color: transparent;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5), 0 0 15px rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  filter: blur(15px);
+  transition: filter 0.3s ease, text-shadow 0.3s ease;
+  letter-spacing: 5px;
 }
 
-.feedback-button {
-    background-color: #4570de; /* Default background color (overridden inline for Good/Bad) */
-    border: none;
-    color: white;
-    padding: 15px 32px; /* Same padding as controls */
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 18px; /* Same font size as controls */
-    margin: 5px; /* Add spacing between buttons */
-    border-radius: 5px; /* Rounded corners */
-    cursor: pointer;
-    transition: transform 0.2s ease; /* Add a hover effect */
+.scramble.revealed {
+  color: white;
+  text-shadow: none;
+  filter: none;
+  letter-spacing: normal;
+}
+
+/* --- Feedback & Control Buttons --- */
+
+#feedbackButtons {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.feedback-button, #controls > button {
+  background-color: #4570de;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 18px;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
 .feedback-button:hover {
-    transform: scale(1.1); /* Slightly enlarge on hover */
+  transform: scale(1.1);
 }
 
-p.algdisp {
-
-
-}
-
-table {
-  border-collapse: collapse;
-}
-
-th, td, tr{
+.large-button {
+  width: 80px;
+  height: 50px;
+  font-size: 18px;
+  border-radius: 5px;
+  margin-right: 8px;
+  background-color: #4570de;
+  color: white;
   border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-/* Placeholder for column_left */
-.column-placeholder {
-    width: 30%; /* Same width as column_left */
-    float: left; /* Maintain the layout flow */
+.large-button:hover { background-color: #3658b0; }
+.large-button:active { background-color: #2a4a8a; transform: scale(0.95); }
+
+.apply-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  margin: 5px;
+  border-radius: 4px;
+}
+.apply-button:hover { background-color: #45a049; }
+
+/* Specific Button Colors */
+.fetch-algs-button { background-color: #9C27B0; color: black; }
+.fetch-algs-button:hover { background-color: #7B1FA2; }
+.fetch-algs-button:active { background-color: #6A1B9A; }
+
+.start-session-button { background-color: #FF9800; color: black; }
+.start-session-button:hover { background-color: #fff93d; }
+.start-session-button:active { background-color: #F57C00; }
+
+.select-sets-button { background-color: #4bbc00; color: black; }
+.select-sets-button:hover { background-color: #bbff1e; }
+.select-sets-button:active { background-color: #0277BD; }
+
+.biggerButton {
+  background-color: #0f7cea;
+  border: none;
+  color: white;
+  padding: 20px 40px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 18px;
+  margin: 0px;
+  border-radius: 1px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-/* Style for column_left */
+.transparentBackground {
+  background-color: #00000000 !important;
+}
+
+/* --- Layout Columns --- */
+
+.column-placeholder { width: 30%; float: left; }
+
 .column_left {
-    position: absolute; /* Make the column absolute */
-    top: 10px; /* Place it near the top of the screen */
-    left: 10px; /* Place it near the left of the screen */
-    width: 30%; /* Retain its width */
-    z-index: 100; /* Ensure it stays above other elements */
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 30%;
+  z-index: 100;
 }
 
-/* Style for column_middle */
 .column_middle {
-    text-align: center;
-    float: left;
-    width: 40%;  
+  text-align: center;
+  float: left;
+  width: 40%;
 }
 
-/* Style for column_right */
 .column_right {
-    text-align: center;
-    float: left;
-    width: 30%;
+  text-align: center;
+  float: left;
+  width: 30%;
 }
 
-.algsetpicker{
-  width:70%;
+/* --- Selection Grid (Set Selector) --- */
+
+/* Base Modal Styling */
+.selection-grid {
+  display: none;
+  position: fixed;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 95%;        /* Take up most width on mobile */
+  max-width: 680px;  /* Much thinner on desktop */
+  max-height: 90vh;
+  overflow-y: auto;
+  background-color: #333;
+  border: 2px solid black;
+  padding: 15px;     /* Slight increase in padding */
+  z-index: 100;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-a:link {
-  color: cornflowerblue
+/* Face Rows (Rows containing Left and Right groups) */
+.face-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px; /* Slightly more space between rows */
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 4px;
+  border-radius: 8px;
 }
 
-a:visited {
-  color: darkslateblue
+/* Half-row container (Left vs Right) */
+.face-group {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  flex: 1; /* Take equal width */
 }
 
+/* Vertical separator */
+.face-separator {
+  width: 2px;
+  height: 40px;      /* Taller to match bigger buttons */
+  background-color: #555;
+  margin: 0 12px;    /* Tighter horizontal spacing */
+}
+
+/* Set Selector Buttons */
+.set-btn {
+  width: 48px;       /* Bigger width */
+  height: 48px;      /* Bigger height */
+  margin: 3px;       /* Little more breathing room */
+  font-size: 1.1rem; /* Larger, readable font */
+  font-weight: bold;
+  border: 1px solid #333;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  color: inherit;
+}
+
+.set-btn.untoggled {
+  opacity: 0.3; 
+  filter: grayscale(30%); 
+  border: 1px solid #555;
+  box-shadow: none;
+}
+
+.set-btn:active { transform: scale(0.95); }
+
+/* Buffer Piece Styling */
+.set-btn.buffer {
+  background-color: #222 !important;
+  color: #555 !important;
+  border: 1px dashed #444;
+  cursor: default;
+}
+
+.face-U { 
+  background-color: #ffffff; 
+  color: #000000; 
+}
+
+.face-L { 
+  background-color: #ffaa00; 
+  color: #000000; 
+}
+
+.face-F { 
+  background-color: #00dd00; 
+  color: #000000; 
+}
+
+.face-R { 
+  background-color: #ff0000; 
+  color: #ffffff; 
+}
+
+.face-B { 
+  background-color: #0000ff; 
+  color: #ffffff; 
+}
+
+.face-D { 
+  background-color: #ffff00; 
+  color: #000000; 
+}
+
+/* --- Pair Selection Grid --- */
+
+#pairSelectionGrid {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* True centering */
+  width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background-color: #333;
+  color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  z-index: 101; /* Above set selector */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#pairSelectionTitle {
+  color: white;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.pair-grid-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.grid-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grid-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.separator {
+  width: 2px;
+  background-color: white;
+}
+
+/* Individual Pair Buttons */
+.pairButton {
+  width: 50px;
+  height: 50px;
+  font-size: 16px;
+  margin: 1px;
+  border: 1px solid #333;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.pairButton:active { transform: scale(0.95); }
+
+/* Untoggled Pair State */
+.pairButton.untoggled {
+  background-color: #333 !important;
+  color: #555 !important;
+  border-color: #444 !important;
+}
+
+#applyPairSelectionButton {
+  margin-top: 20px;
+  width: 100%;
+  height: 50px;
+  font-size: 18px;
+  background-color: #03A9F4;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+#applyPairSelectionButton:hover { background-color: #0288D1; }
+
+/* Pair Button Colors */
+.sticker-white { background-color: #ffffff; color: #000000; }
+.sticker-yellow { background-color: #ffd500; color: #000000; }
+.sticker-red { background-color: #dc0000; color: #ffffff; }
+.sticker-orange { background-color: #ff5800; color: #ffffff; }
+.sticker-green { background-color: #009e60; color: #ffffff; }
+.sticker-blue { background-color: #0051ba; color: #ffffff; }
+.sticker-grey { background-color: #888888; color: #ffffff; }
+
+/* --- Cube Net / Custom Scheme --- */
+
+.cube-net-container {
+  display: grid;
+  grid-template-columns: 90px 90px 90px 90px;
+  grid-template-rows: 90px 90px 90px;
+  gap: 5px;
+  margin: 20px auto;
+  width: max-content;
+}
+
+.face-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2px;
+  border: 1px solid #333;
+  padding: 2px;
+  background-color: #222;
+}
+
+.face-u { grid-column: 2; grid-row: 1; }
+.face-l { grid-column: 1; grid-row: 2; }
+.face-f { grid-column: 2; grid-row: 2; }
+.face-r { grid-column: 3; grid-row: 2; }
+.face-b { grid-column: 4; grid-row: 2; }
+.face-d { grid-column: 2; grid-row: 3; }
+
+.sticker-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: black;
+  padding: 0;
+  text-transform: uppercase;
+}
+
+/* Scheme Colors (Inputs) */
+.face-u .sticker-input { background-color: #ffffff; }
+.face-l .sticker-input { background-color: #ffaa00; }
+.face-f .sticker-input { background-color: #00dd00; }
+.face-r .sticker-input { background-color: #ff0000; color: white; }
+.face-b .sticker-input { background-color: #0000ff; color: white; }
+.face-d .sticker-input { background-color: #ffff00; }
+
+.sticker-input:disabled {
+  background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1));
+  cursor: default;
+  color: #555;
+  font-size: 10px;
+}
+
+/* --- Misc & Utilities --- */
+
+div.hidden { display: none; }
+
+table { border-collapse: collapse; }
+th, td, tr { border: none; }
+
+a:link { color: cornflowerblue }
+a:visited { color: darkslateblue }
 
 #loader {
   position: absolute;
   left: 50%;
   top: 50%;
   z-index: 10;
-  width: 150px;
-  height: 150px;
   margin: -75px 0 0 -75px;
   border: 16px solid #f3f3f3;
   border-radius: 50%;
@@ -160,7 +479,6 @@ a:visited {
   100% { transform: rotate(360deg); }
 }
 
-/* Add animation to "page content" */
 .animate-bottom {
   position: relative;
   -webkit-animation-name: animatebottom;
@@ -179,10 +497,7 @@ a:visited {
   to{ bottom:0; opacity:1 }
 }
 
-#page {
-  display: none;
-
-}
+#page { display: none; }
 
 #controls {   
   position: fixed;
@@ -192,29 +507,13 @@ a:visited {
   margin: 0 auto;
 }
 
-#controls > button {
-  background-color: #4570de; 
-  border: none;
-  color: white;
-  padding: 15px 32px;
-  text-align: center; 
-  text-decoration: none;
-  display: inline-block;
-  font-size: 18px;
-}
-
 canvas {
   width: 360px;
   height: 360px;
 }
 
-#holdingOrientation {
-  white-space: pre;
-}
+#holdingOrientation { white-space: pre; }
 
-form {
-  /* margin-bottom: 5px; */
-}
 form input, form label, form button {
   margin-bottom: 5px;
   box-sizing: border-box;
@@ -222,13 +521,13 @@ form input, form label, form button {
 }
 
 #userDefinedAlgs {
-  width: 70%; /* Set the width to fill the container */
-  height: 200px; /* Adjust the height to make it larger */
-  font-size: 14px; /* Increase font size for better readability */
-  padding: 10px; /* Add padding inside the box */
-  border: 1px solid #ccc; /* Add a border for better visibility */
-  border-radius: 5px; /* Add rounded corners */
-  resize: vertical; /* Allow vertical resizing by the user */
+  width: 70%;
+  height: 200px;
+  font-size: 14px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  resize: vertical;
 }
 
 .container {
@@ -244,664 +543,170 @@ form input, form label, form button {
   border-radius: 8px;
 }
 
-.button-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr); /* Adjust for your layout */
-  gap: 5px;
-}
+#goodLabel { color: green; }
+#badLabel { color: red; }
+.feedback-last-comm { font-size: 2.5em; }
 
-.cube-select-button {
-  padding: 10px;
+.close-button {
+  background-color: red;
+  color: white;
+  border: none;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
   font-size: 16px;
-  cursor: pointer;
-}
-
-div.hidden {
-  display:none;
-}
-
-/* #repetitionCounter {
-  position: absolute;
-  top: 11%;
-  right: 30%;
-  font-size: 2em; /* Make it larger 
   font-weight: bold;
-   /* background-color: #000000; Light background for visibility */
-  /* padding: 10px 20px; */
-  /* border-radius: 8px; Rounded corners */
-  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); Subtle shadow 
-  z-index: 9; /* Ensure it stays on top 
-} */
-
-.scramble.obfuscated {
-  color: transparent; /* Hide the text */
-  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5), /* Add a glowing effect */
-               0 0 15px rgba(255, 255, 255, 0.5); /* Repeat for stronger blur */
-  cursor: pointer; /* Indicate interactivity */
-  filter: blur(15px); /* Add a blur effect */
-  transition: filter 0.3s ease, text-shadow 0.3s ease; /* Smooth transition for the blur effect */
-  letter-spacing: 5px; /* Add spacing to make the text length harder to infer */
+  border-radius: 4px;
 }
 
-.scramble.revealed {
-  color: white; /* Show the text */
-  text-shadow: none; /* Remove the glowing effect */
-  filter: none; /* Remove the blur effect */
-  letter-spacing: normal; /* Reset letter spacing */
-}
-
-#goodLabel {
-    color: green; /* Green color for "Good" */
-}
-
-#badLabel {
-    color: red; /* Red color for "Bad" */
-}
-
-.feedback-last-comm {
-  font-size: 2.5em;
-}
-
-.biggerButton {
-  background-color: #0f7cea; /* Default background color */
-  border: none;
+.reset-button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #808080;
   color: white;
-  padding: 20px 40px; /* Same padding as controls */
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 18px; /* Same font size as controls */
-  margin: 0px; /* Add spacing between buttons */
-  border-radius: 1px; /* Rounded corners */
-  cursor: pointer;
-  transition: transform 0.2s ease; /* Add a hover effect */
-}
-
-.transparentBackground {
-  background-color: #00000000 !important; /* Default background color */
-}
-
-/* Style for the button to open the grid */
-.large-button {
-  width: 80px;
-  height: 50px;
-  font-size: 18px;
+  border: none;
   border-radius: 5px;
-  margin-right: 8px;
-  background-color: #4570de; /* Default background color */
-  color: white;
-  border: none;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease; /* Smooth transition for feedback */
+  transition: background-color 0.3s ease;
+}
+.reset-button:hover { background-color: #FF0000; }
+
+/* Toggles */
+.mode-toggle { display: inline-block; margin: 10px; }
+
+.toggle-container, .toggle-container-drilling {
+  position: relative;
+  display: inline-block;
+  width: 120px;
+  height: 40px;
 }
 
-.large-button:hover {
-  background-color: #3658b0; /* Slightly darker color on hover */
+.toggle-container input, .toggle-container-drilling input {
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
-.large-button:active {
-  background-color: #2a4a8a; /* Even darker color when pressed */
-  transform: scale(0.95); /* Slightly shrink the button for a pressed effect */
-}
-
-/* Style for the selection grid */
-.selection-grid {
-    display: none;
-    position: absolute;
-    top: 20%;
-    background-color: #333; /* Darker background color */
-    border: 2px solid black;
-    padding: 20px;
-    z-index: 100;
-    border-radius: 8px; /* Optional: Add rounded corners for better aesthetics */
-}
-
-/* Style for the grid rows */
-.grid-row {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 10px;
-}
-
-/* Style for the grid buttons */
-.large-grid-button {
-    width: 55px; /* 25% smaller width */
-    height: 55px; /* 25% smaller height */
-    font-size: 18px; /* Adjust font size proportionally */
-    cursor: pointer;
-    text-align: center;
-    border: 1px solid black;
-    border: 5%;
-    background-color: #f0f0f0;
-    transition: background-color 0.3s;
-}
-
-.large-grid-button:hover {
-    background-color: #d0d0d0;
-}
-
-/* Center the selection grid */
-/* .selection-grid {
-  display: none;
+.toggle-slider {
   position: absolute;
-  top: 50%; 
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #333; 
-  border: 2px solid black;
-  padding: 20px;
-  z-index: 100;
-  border-radius: 8px; 
-} */
-
-/* Colors for the buttons */
-.white {
-  background-color: #EFEFEF;
-  color: black;
-}
-
-.orange {
-  background-color: #FF9900;
-  color: black;
-}
-
-.green {
-  background-color: #00FF00;
-  color: black;
-}
-
-.red {
-  background-color: #EA4335;
-  color: black;
-}
-
-.blue {
+  top: 0; left: 0; right: 0; bottom: 0;
   background-color: #4285F4;
   color: white;
+  text-align: center;
+  line-height: 40px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
-.yellow {
+.toggle-container input:checked + .toggle-slider {
+  background-color: #FF0000;
+}
+
+.toggle-slider-drilling {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
   background-color: #FFD700;
   color: black;
-}
-
-/* Style for Fetch Algs button */
-.fetch-algs-button {
-    background-color: #9C27B0; /* Purple */
-    color: black;
-}
-
-.fetch-algs-button:hover {
-    background-color: #7B1FA2; /* Slightly darker purple on hover */
-}
-
-.fetch-algs-button:active {
-    background-color: #6A1B9A; /* Even darker purple when pressed */
-}
-
-/* Style for Start Session button */
-.start-session-button {
-    background-color: #FF9800; /* Orange */
-    color: black;
-}
-
-.start-session-button:hover {
-    background-color: #fff93d; /* Slightly darker orange on hover */
-}
-
-.start-session-button:active {
-    background-color: #F57C00; /* Even darker orange when pressed */
-}
-
-/* Style for Select Sets button */
-.select-sets-button {
-    background-color: #4bbc00; /* Light Blue */
-    color: black;
-}
-
-.select-sets-button:hover {
-    background-color: #bbff1e; /* Slightly darker blue on hover */
-}
-
-.select-sets-button:active {
-    background-color: #0277BD; /* Even darker blue when pressed */
-}
-
-/* Default styles for the pair selection grid */
-#pairSelectionGrid {
-    position: fixed; /* Use fixed positioning to ensure it stays in place */
-    top: 100px; /* Adjust as needed */
-    right: 100px; /* Align it to the right edge of the screen */
-    width: 550px; /* Default width */
-    background-color: #333;
-    color: white;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 20px;
-    z-index: 100;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Adjust position for smaller screens */
-@media (max-width: 768px) {
-    #pairSelectionGrid {
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 100%; /* Full width for smaller screens */
-        height: 100%; /* Full height for smaller screens */
-        border-radius: 0; /* Remove border radius */
-        padding: 10px; /* Adjust padding */
-        overflow-y: auto; /* Enable scrolling if content overflows */
-    }
-}
-
-/* Style for the title */
-#pairSelectionTitle {
-    color: white;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-/* Style for the pair grid container */
-.pair-grid-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-/* Style for the left and right columns */
-.grid-column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-/* Style for rows within each column */
-.grid-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-}
-
-/* Style for the separator */
-.separator {
-    width: 2px;
-    background-color: white;
-}
-
-/* Style for individual stickers */
-.pairButton {
-    width: 50px; /* Make width larger */
-    height: 50px; /* Match height to width for square buttons */
-    font-size: 16px; /* Increase font size for better readability */
-    margin: 1px; /* Add spacing between buttons */
-    border: none;
-    cursor: pointer;
-    border-radius: 5px; /* Slightly rounded corners */
-    transition: background-color 0.2s ease, transform 0.1s ease; /* Smooth transitions for hover effects */
-}
-
-/* Default styling based on LETTER_COLORS */
-.pairButton {
-    background-color: inherit;
-    color: inherit;
-}
-
-/* Style for untoggled stickers */
-.pairButton.untoggled {
-    background-color: grey !important; /* Grey for untoggled state */
-    color: white !important;
-}
-
-/* Style for the "Apply Selection" button */
-#applyPairSelectionButton {
-    margin-top: 20px;
-    width: 100%;
-    height: 50px;
-    font-size: 18px;
-    background-color: #03A9F4; /* Light blue */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-#applyPairSelectionButton:hover {
-    background-color: #0288D1; /* Slightly darker blue on hover */
-}
-
-/* Style for untoggled set buttons */
-.gridButton.untoggled {
-    background-color: grey !important; /* Grey for untoggled state */
-    color: white !important;
-}
-
-/* Default styling for toggled set buttons */
-.gridButton {
-    background-color: inherit; /* Use the color from LETTER_COLORS */
-    color: inherit;
-}
-
-/* Styles for the red "X" close button */
-.close-button {
-    position: absolute;
-    top: 10px;
-    right: 5px;
-    background-color: red;
-    color: white;
-    border: none;
-    width: 45px;
-    height: 45px;
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 30px;
-    text-align: center;
-}
-
-/* Styles for the toggle button */
-.toggle-button {
-    position: absolute; /* Change to fixed positioning */
-    top: -10px; /* Place it at the top of the viewport */
-    left: 10px; /* Keep it near the left edge */
-    background-color: grey; /* Blue color */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-size: 14px;
-    z-index: 101; /* Ensure it stays above other elements */
-}
-
-/* Styles for the toggle button */
-.toggle-button-pair {
-  position: absolute; /* Change to fixed positioning */
-  top: 10px; /* Place it at the top of the viewport */
-  left: 10px; /* Keep it near the left edge */
-  background-color: grey; /* Blue color */
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 10px 20px;
+  text-align: center;
+  line-height: 40px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 14px;
-  z-index: 101; /* Ensure it stays above other elements */
+  transition: 0.3s;
 }
 
-/* Styles for the reset button */
-.reset-button {
-    margin-top: 10px;
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #808080; /* Grey color */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
-}
-
-.reset-button:hover {
-    background-color: #FF0000; /* Red color on hover */
-}
-/* Style for the toggle container */
-.toggle-container {
-    position: relative;
-    display: inline-block;
-    width: 120px; /* Adjust width as needed */
-    height: 40px; /* Adjust height as needed */
-}
-
-/* Hide the default checkbox */
-.toggle-container input[type="checkbox"] {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-/* Style for the slider (background and text) */
-.toggle-slider {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #4285F4; /* Blue for "Corner" */
-    color: white;
-    text-align: center;
-    line-height: 40px; /* Match the height for vertical centering */
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 20px; /* Rounded corners for the toggle */
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-/* Change background color and text when toggled */
-.toggle-container input[type="checkbox"]:checked + .toggle-slider {
-    background-color: #FF0000; /* Red for "Edge" */
-    transform: translateX(0); /* No movement needed */
-}
-
-/* Optional: Add a hover effect */
-.toggle-slider:hover {
-    filter: brightness(1.1); /* Slightly brighten on hover */
-}
-
-/* Style for the toggle container */
-.toggle-container-drilling {
-    position: relative;
-    display: inline-block;
-    width: 120px; /* Adjust width as needed */
-    height: 40px; /* Adjust height as needed */
-}
-
-/* Hide the default checkbox */
-.toggle-container-drilling input[type="checkbox"] {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-/* Style for the slider (background and text) */
-.toggle-slider-drilling {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #FFD700; /* Yellow for "Drilling" */
-    color: black;
-    text-align: center;
-    line-height: 40px; /* Match the height for vertical centering */
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 20px; /* Rounded corners for the toggle */
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-/* Change background color and text when toggled */
-.toggle-container-drilling input[type="checkbox"]:checked + .toggle-slider-drilling {
-    background-color: #800080; /* Purple for "Regular" */
-    transform: translateX(0); /* No movement needed */
-}
-
-/* Optional: Add a hover effect */
-.toggle-slider-drilling:hover {
-    filter: brightness(1.1); /* Slightly brighten on hover */
+.toggle-container-drilling input:checked + .toggle-slider-drilling {
+  background-color: #800080;
+  color: white;
 }
 
 .build-info {
-    position: absolute;
-    top: 10px; /* Distance from the top of the screen */
-    right: 10px; /* Distance from the right of the screen */
-    font-size: 14px; /* Adjust font size as needed */
-    padding: 5px 10px; /* Add padding for spacing */
-    border-radius: 5px; /* Rounded corners */
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* Optional: shadow for better visibility */
-    z-index: 1000; /* Ensure it appears above other elements */
-}
-
-.apply-button {
-  background-color: #4CAF50; /* Green */
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
   font-size: 14px;
-  margin: 5px;
-  border-radius: 4px;
-}
-.apply-button:hover {
-  background-color: #45a049;
+  padding: 5px 10px;
+  border-radius: 5px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
 }
 
 .upcoming-cycle {
-  font-size: 1.5em; /* A bit smaller than the main cycle */
+  font-size: 1.5em;
   font-weight: normal;
-  color: #cccccc; /* A slightly dimmer color */
-  margin-top: -10px; /* Adjust spacing as needed */
+  color: #cccccc;
+  margin-top: -10px;
   margin-bottom: 20px;
   text-align: center;
-  font-family: Arial, sans-serif;
 }
 
-body {
-  /* This tells the body to ALWAYS animate background color changes over 0.3 seconds. */
-  /* This will apply to both the fade-in AND the fade-out. */
-  transition: background-color 0.4s ease-in-out;
+@media (max-width: 768px) {
+  #pairSelectionGrid {
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100%; height: 100%;
+      transform: none;
+      border-radius: 0;
+  }
+  
+  .selection-grid {
+      width: 100%;
+      top: 0;
+      max-height: 100vh;
+      border-radius: 0;
+  }
 }
 
-body.solve-success-flash {
-  /* This class now ONLY sets the target color. The transition is handled above. */
-  background-color: #0b4300;
+/* --- Set Selector Labels --- */
+
+.set-labels-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #ccc;
+  font-size: 1.1rem;
 }
 
-/* Cube Net Layout */
-.cube-net-container {
-  display: grid;
-  grid-template-columns: 90px 90px 90px 90px; /* 4 columns for L, F, R, B */
-  grid-template-rows: 90px 90px 90px; /* 3 rows for U, Middle, D */
-  gap: 5px;
-  margin: 20px auto;
-  width: max-content;
-}
-
-.face-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 2px;
-  border: 1px solid #333;
-  padding: 2px;
-  background-color: #222;
-}
-
-/* Positioning faces in the 4x3 grid */
-.face-u { grid-column: 2; grid-row: 1; } /* Top */
-.face-l { grid-column: 1; grid-row: 2; } /* Left */
-.face-f { grid-column: 2; grid-row: 2; } /* Front */
-.face-r { grid-column: 3; grid-row: 2; } /* Right */
-.face-b { grid-column: 4; grid-row: 2; } /* Back */
-.face-d { grid-column: 2; grid-row: 3; } /* Bottom */
-
-.sticker-input {
-  width: 100%;
-  height: 100%;
-  border: none;
+.set-label {
+  flex: 1;
   text-align: center;
-  font-size: 14px;
+}
+
+.set-label-spacer {
+  /* Matches width of separator + margins in the grid */
+  width: 32px; 
+}
+
+/* Optional: Title Styling (if you want to move the Header styles too) */
+.selector-title-container {
+  text-align: center;
+  margin-bottom: 10px; /* Reduced from 20px */
+}
+
+.selector-main-title {
+  margin: 0 0 2px 0;
+  color: white;
+  font-size: 1.3rem; /* Slightly smaller */
+}
+
+.set-labels-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2px; /* Tight against the grid */
   font-weight: bold;
-  color: black;
-  padding: 0;
-  text-transform: uppercase;
+  color: #ccc;
+  font-size: 1rem; /* Smaller font */
 }
 
-/* Face Colors (Backgrounds for inputs) */
-.face-u .sticker-input { background-color: #ffffff; } /* White */
-.face-l .sticker-input { background-color: #ffaa00; } /* Orange */
-.face-f .sticker-input { background-color: #00dd00; } /* Green */
-.face-r .sticker-input { background-color: #ff0000; color: white; } /* Red */
-.face-b .sticker-input { background-color: #0000ff; color: white; } /* Blue */
-.face-d .sticker-input { background-color: #ffff00; } /* Yellow */
-
-/* Center stickers styling */
-.sticker-input:disabled {
-  background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)); /* Slightly darker */
-  cursor: default;
-  color: #555;
-  font-size: 10px;
-}
-
-/* Base Button Styling */
-.pairButton {
-  /* Define dimensions here to keep JS clean */
-  width: 40px;
-  height: 40px; 
-  margin: 4px;
-  border: 1px solid #333;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
-}
-
-.pairButton:active {
-  transform: scale(0.95);
-}
-
-/* 
- State: Untoggled 
- This overrides the color classes below when the sticker is disabled
-*/
-.pairButton.untoggled {
-  background-color: #333 !important; /* Dark grey */
-  color: #555 !important;            /* Dim text */
-  border-color: #444 !important;
-}
-
-/* 
- Color Classes 
- Matches standard LETTER_COLORS keys: white, yellow, red, orange, green, blue 
-*/
-
-.sticker-white {
-  background-color: #ffffff;
-  color: #000000;
-}
-
-.sticker-yellow {
-  background-color: #ffd500;
-  color: #000000;
-}
-
-.sticker-red {
-  background-color: #dc0000;
-  color: #ffffff;
-}
-
-.sticker-orange {
-  background-color: #ff5800;
-  color: #ffffff;
-}
-
-.sticker-green {
-  background-color: #009e60;
-  color: #ffffff;
-}
-
-.sticker-blue {
-  background-color: #0051ba;
-  color: #ffffff;
-}
-
-/* Fallback for unknown colors */
-.sticker-grey {
-  background-color: #888888;
-  color: #ffffff;
+.selector-sub-title {
+  margin: 0;
+  font-size: 1rem;
+  color: #bbb;
 }
