@@ -2701,6 +2701,7 @@ async function fetchAlgs() {
             .map(columns => ({ key: columns[0].trim(), value: columns[1].trim() })) 
             .filter(pair => pair.key !== "" && pair.value !== "" && pair.value !== "\r"); 
 
+        alert(`Fetched ${fetchedAlgs.length} algorithms successfully.`);
         console.log("Fetched algorithms:", fetchedAlgs);
         saveFetchedAlgs(fetchedAlgs); 
     } catch (err) {
@@ -2879,7 +2880,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
                                 btn.classList.add("untoggled");
                             }
 
-                            btn.addEventListener("click", () => handleGridButtonClick(btn, letter, pos));
+                            btn.addEventListener("click", () => handleGridButtonClick(btn, letter, pos, index));
                             
                             btn.addEventListener("contextmenu", (e) => {
                                 e.preventDefault();
@@ -3574,7 +3575,7 @@ function updateActiveAlgCount() {
     statsLabel.style.color = activeCount === 0 ? "#ff4444" : "#4CAF50";
 }
 
-function handleGridButtonClick(button, letter, position) {
+function handleGridButtonClick(button, letter, position, index) {
     const setKey = position === 'first' ? `${letter}_` : `_${letter}`;
     const newState = !selectedSets[setKey];
     selectedSets[setKey] = newState;
@@ -3582,13 +3583,18 @@ function handleGridButtonClick(button, letter, position) {
     button.classList.toggle("untoggled", !newState);
     saveSelectedSets();
 
+    const dbLetter = (typeof DEFAULT_POSITION_TO_LETTER_MAP !== 'undefined' && DEFAULT_POSITION_TO_LETTER_MAP[index]) 
+                     ? DEFAULT_POSITION_TO_LETTER_MAP[index] 
+                     : letter;
+
     if (fetchedAlgs.length > 0) {
         fetchedAlgs.forEach(item => {
             const key = item.key;
             if (key.length < 2) return;
-            if (position === 'first' && key[0] === letter) {
+            
+            if (position === 'first' && key[0] === dbLetter) {
                 stickerState[key] = newState;
-            } else if (position === 'second' && key[1] === letter) {
+            } else if (position === 'second' && key[1] === dbLetter) {
                 stickerState[key] = newState;
             }
         });

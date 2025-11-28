@@ -1,4 +1,4 @@
-const APP_VERSION = "v1.0.0 - set selector rework"; 
+const APP_VERSION = "v1.0.1 - set selector - non default chars fix"; 
 
 const regularDrillOptions = [
     "klik", "bip",
