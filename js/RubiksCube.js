@@ -69,7 +69,6 @@ function initializeDrillingPairs(algsFromTextarea) {
         const inverseKey = inverseKeyMap.get(key);
         const inverseAlg = keyToCommMap.get(inverseKey);
         
-        
         if (inverseAlg && algsFromTextarea.map(a => a.trim()).includes(inverseAlg.trim())) {
             drillingPairs.push([trimmedAlg, inverseAlg]);
             processed.add(trimmedAlg);
@@ -171,7 +170,6 @@ function advanceDrill() {
 const modeToggle = document.getElementById("modeToggle");
 const modeToggleLabel = document.getElementById("modeToggleLabel");
 
-
 const savedMode = localStorage.getItem("mode") || "corner";
 let currentMode = savedMode;
 
@@ -192,7 +190,6 @@ modeToggle.addEventListener("change", function () {
 
     console.log(`Mode switched to: ${currentMode}`);
 });
-
 
 function updateProxyUrl() {
     if (currentMode === "corner") {
@@ -226,7 +223,6 @@ let utterance = null;
 let selectedVoice = null;
 let toggleFeedbackUsed = false; 
 
-
 function loadVoices() {
     var voices = window.speechSynthesis.getVoices();
     var filteredVoices = voices.filter(voice => voice.lang.startsWith('pl'));
@@ -240,7 +236,6 @@ document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
 if (localStorage.getItem("enableTTS") === null) {
     localStorage.setItem("enableTTS", "true"); 
 }
-
 
 if (typeof speechSynthesis !== "undefined" && speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = loadVoices;
@@ -298,7 +293,6 @@ function handleOrientation() {
     updateVirtualCube();
 }
 
-
 function findPivot(alg) {
     let cube = new RubiksCube();
     let moves = alg.split(" ");
@@ -331,8 +325,6 @@ function findPivot(alg) {
 
     return -1;
 }
-
-
 
 function findRotationToFixPivot(pivotIndex) {
     const rotations = ["", "x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"];
@@ -383,7 +375,6 @@ function applyMoves(moves) {
     let startingRotation = ori;
   
 
-
     let fixPivotRotation = "";
 
     if (algorithmHistory.length > 0) {
@@ -391,7 +382,6 @@ function applyMoves(moves) {
         if (lastTest == undefined) {
             return;
         }
-
 
         tmp = startingRotation + " " + moves + " " + alg.cube.invert(startingRotation);
         cube.doAlgorithm(tmp);
@@ -401,8 +391,6 @@ function applyMoves(moves) {
         if (pivotIndex != -1) {
             fixPivotRotation = findRotationToFixPivot(pivotIndex);
             
-            
-
 
             
         }
@@ -441,7 +429,6 @@ function applyMoves(moves) {
     if (fixPivotRotation.length > 0)
         console.log("need to do fpr", fixPivotRotation);
 
-
     doAlg("U U'", true);
 
     updateVirtualCube();
@@ -456,14 +443,10 @@ connectSmartCubeElement.addEventListener('click', async () => {
     await connectSmartCube();
 });
 
-
 var resetSessionElement = document.getElementById("resetSession");
 resetSessionElement.addEventListener('click', async () => {
     await connectSmartCube();
 });
-
-
-
 
 function adjustButtonWidths() {
     minButtonWidth = 100;
@@ -539,7 +522,6 @@ setTimerDisplay(!document.getElementById("hideTimer").checked);
 
 document.getElementById("userDefinedAlgs").style.display = "block";
 
-
 setVirtualCube(document.getElementById("useVirtual").checked);
 updateVirtualCube();
 
@@ -573,7 +555,6 @@ visualCube.addEventListener("click", function () {
     localStorage.setItem("visualCubeView", newView);
     var algTest = algorithmHistory[historyIndex];
 });
-
 
 var showScramble = document.getElementById("showScramble");
 showScramble.addEventListener("click", function () {
@@ -629,23 +610,10 @@ mirrorAllAlgsAcrossS.addEventListener("click", function () {
     localStorage.setItem("mirrorAllAlgsAcrossS", this.checked);
 });
 
-
-
-
-
-
-
 var fullCN = document.getElementById("fullCN");
 fullCN.addEventListener("click", function () {
     localStorage.setItem("fullCN", this.checked);
 });
-
-
-
-
-
-
-
 
 var clearTimes = document.getElementById("clearTimes");
 clearTimes.addEventListener("click", function () {
@@ -666,16 +634,6 @@ deleteLast.addEventListener("click", function () {
     updateTimeList();
     updateStats();
 });
-
-
-
-
-
-
-
-
-
-
 
 try { 
     const leftPopUpButton = document.getElementById("left_popup_button");
@@ -716,7 +674,6 @@ function getRotationMap(moves) {
    
     rotationCube.doAlgorithm(moves);
     
-    
 
     let faces = "URFDLB";
     for (let i = 0; i < 6; ++i) {
@@ -731,14 +688,12 @@ function updateVirtualCube(initialRotations = holdingOrientation.value + ' ' + c
     vc.cubeString = cube.toString();
     let initialMaskedCubeString = cube.toInitialMaskedString(initialMask.value);
     
-    
 
     let rotationMap = getRotationMap(initialRotations);
     
 
     for (let k = 0; k < 54; ++k) {
         if (vc[k] != 'x') {
-            
             
             vc.cubeString = setCharAt(vc.cubeString, k, rotationMap[vc.cubeString[k]]);
         }
@@ -787,7 +742,6 @@ function getRandAuf(letter) {
     var aufs = [letter + " ", letter + "' ", letter + "2 ", ""];
     return aufs[rand];
 }
-
 
 function getPremoves(length) {
     var previous = "U"; 
@@ -915,7 +869,6 @@ function generateAlgTest(rawAlgStr) {
         }
     }
 
-
     var solutions;
     if (randAUF) {
         solutions = addAUFs(rawAlgs);
@@ -1009,8 +962,6 @@ function updateTrainer(scramble, solutions, algorithm, timer) {
         document.getElementById("scramble").innerHTML = scramble;
     }
     
-    
-    
 
     if (algorithm != null) {
         cube.resetCube();
@@ -1029,11 +980,7 @@ function fixAlgorithms(algorithms) {
         
         let currAlg = algorithms[i].replace(/\[|\]|\)|\(/g, "");
         
-        
 
-        
-        
-        
         
 
     }
@@ -1323,7 +1270,6 @@ function averageMovecount(algList, metric, includeAUF) {
         var topAlg = algList[i].split("!")[0];
         topAlg = topAlg.replace(/\[|\]|\)|\(/g, "");
         
-        
         topAlg = commToMoves(topAlg);
         
 
@@ -1377,7 +1323,6 @@ function isUsingVirtualCube() {
         return true;
     }
 }
-
 
 var listener = new Listener();
 
@@ -1515,7 +1460,6 @@ function updateControls() {
 
 setInterval(updateControls, 300);
 
-
 function release(event) {
     if (event.key == " " || event.type == "touchend") { //space
         if (document.activeElement.type == "text") {
@@ -1527,17 +1471,7 @@ function release(event) {
 
         document.getElementById("timer").style.color = "white"; //Timer should never b any color other than white when space is not pressed down
         
-        
-        
 
-
-        
-        
-        
-        
-        
-        
-        
         
     }
 };
@@ -1587,9 +1521,7 @@ function press(event) { //Stops the screen from scrolling down when you press sp
 
                 }
                 
-                
 
-                
                 
 
                 else if (document.getElementById("timer").innerHTML == "Ready") {
@@ -1607,7 +1539,6 @@ try { //only for mobile
 
 }
 
-
 class SolveTime {
     constructor(time, cycleLetters = "") {
         this.time = time;
@@ -1623,7 +1554,6 @@ class SolveTime {
         return this.time;
     }
 }
-
 
 const nextScrambleButton = document.querySelector('button[name="nextScrambleButton"]');
 if (nextScrambleButton)
@@ -1692,7 +1622,6 @@ function RubiksCube() {
 
             for (var j = 0; j < 9; j++) {
                 
-                
                 if (initialMask.length == 54 && initialMask[this.cubestate[9 * i + j][1]] == 'x') {
                     continue;
                 }
@@ -1706,7 +1635,6 @@ function RubiksCube() {
         return true;
     }
     this.wcaOrient = function () {
-        
         
         //
         var moves = "";
@@ -1777,7 +1705,6 @@ function RubiksCube() {
             var move = moveArr[i];
             var myRegexp = /([RUFBLDrufbldxyzEMS])(\d*)('?)/g;
             var match = myRegexp.exec(move.trim());
-
 
             if (match != null) {
 
@@ -2093,14 +2020,9 @@ function parseLettersForTTS(letters) {
     }
 }
 
-
 function checkForSpecialSequences() {
     const recentMoves = moveHistory.join("");
 
-    
-    
-    
-    
     
 
     if (recentMoves.endsWith("D D D D D D D D ") || recentMoves.endsWith("D'D'D'D'D'D'D'D'")) {
@@ -2457,7 +2379,6 @@ function updateFeedbackResults() {
     changeListElement.innerHTML = formatListWithHighlight(changeCycles, lastCycleLetters);
 }
 
-
 function formatListWithHighlight(list, highlightItem) {
     return list
         .map(item => {
@@ -2506,10 +2427,8 @@ function hideScramble() {
 
 const obfuscateScrambleCheckbox = document.getElementById("obfuscateScrambleCheckbox");
 
-
 const savedObfuscateState = localStorage.getItem("obfuscateScramble") === "true";
 obfuscateScrambleCheckbox.checked = savedObfuscateState;
-
 
 obfuscateScrambleCheckbox.addEventListener("change", function () {
     localStorage.setItem("obfuscateScramble", obfuscateScrambleCheckbox.checked);
@@ -2637,7 +2556,6 @@ function copyFeedbackToClipboard() {
     });
 }
 
-
 function copyToClipboard(elementId) {
     const text = document.getElementById(elementId).innerText;
     navigator.clipboard.writeText(text).then(() => {
@@ -2646,7 +2564,6 @@ function copyToClipboard(elementId) {
         console.error('Failed to copy text: ', err);
     });
 }
-
 
 function copyCyclePositions(originId = "none") {
     let cycleData;
@@ -2731,9 +2648,7 @@ document.getElementById("clearUserAlgsButton").addEventListener("click", functio
 
 let fetchedAlgs = []; 
 
-
 const lastFetchLabel = document.getElementById("lastFetchLabel");
-
 
 function loadCachedAlgs() {
     const cachedAlgs = localStorage.getItem("fetchedAlgs");
@@ -2794,12 +2709,9 @@ async function fetchAlgs() {
     }
 }
 
-
 document.addEventListener("DOMContentLoaded", loadCachedAlgs);
 
-
 document.getElementById("fetchAlgsButton").addEventListener("click", fetchAlgs);
-
 
 document.addEventListener("DOMContentLoaded", function () {
     
@@ -2807,9 +2719,7 @@ document.addEventListener("DOMContentLoaded", function () {
     selectionGrid.style.display = "none"; 
 });
 
-
 const selectedSets = {};
-
 
 let disableInversesMode = localStorage.getItem(getStorageKey("disableInversesMode")) === "true";
 
@@ -3062,7 +2972,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 const ALL_LETTERS = "AOIEFGHJKLNBPQTSRCDWZ".split(""); 
 
-
 const EXCLUDED_TRIOS_CORNERS = [
     ["A", "E", "R"], 
     ["O", "Q", "N"], 
@@ -3154,9 +3063,7 @@ function showPairSelectionGrid(setName) {
     const colorGroups = {};
     pairs.forEach(pair => {
         
-        
         const colorLetter = pair[0] === setName ? pair[1] : pair[0];
-        
         
         const { background } = LETTER_COLORS[colorLetter] || { background: "grey" }; 
         
@@ -3176,10 +3083,7 @@ function showPairSelectionGrid(setName) {
         colorGroups[colorName].forEach(pair => {
             const button = document.createElement("button");
             
-            
             button.classList.add("pairButton"); 
-            
-            
             
             const safeColorName = colorName.toLowerCase().replace(/\s+/g, '-');
             button.classList.add(`sticker-${safeColorName}`); 
@@ -3350,7 +3254,6 @@ function getPieceNotation(cycleLetters) {
     return [buffer, ...pieces].join(" ");
 }
 
-
 document.getElementById("cycle").addEventListener("click", function () {
     const cycleLetters = this.textContent.trim(); 
     const pieceNotation = getPieceNotation(cycleLetters); 
@@ -3428,14 +3331,11 @@ function updateStickerState(keysWithValues) {
 const drillingModeToggle = document.getElementById("drillingModeToggle");
 const drillingModeLabel = document.getElementById("drillingModeLabel");
 
-
 const savedDrillingMode = localStorage.getItem("drillingMode") === "true";
 let isDrillingMode = savedDrillingMode;
 
-
 drillingModeToggle.checked = isDrillingMode;
 drillingModeLabel.textContent = isDrillingMode ? "Drilling" : "Regular";
-
 
 drillingModeToggle.addEventListener("change", function () {
     isDrillingMode = this.checked; 
@@ -3510,36 +3410,24 @@ function showSuccessFeedback() {
     const body = document.body;
     const timerElement = document.getElementById("timer");
 
-    
     body.classList.add("solve-success-flash");
-
-    
-   
-
-    
     setTimeout(() => {
         body.classList.remove("solve-success-flash"); 
   
     }, 400); 
 }
 
-
 const visualFeedbackCheckbox = document.getElementById("visualFeedbackCheckbox");
-
-
 
 const savedVisualFeedback = localStorage.getItem("visualFeedbackEnabled");
 let isVisualFeedbackEnabled = savedVisualFeedback === null ? true : savedVisualFeedback === "true";
 
-
 visualFeedbackCheckbox.checked = isVisualFeedbackEnabled;
 localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled); 
-
 
 visualFeedbackCheckbox.addEventListener("change", function () {
     
     isVisualFeedbackEnabled = this.checked;
-    
     
     localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled);
 
@@ -3556,7 +3444,6 @@ function applySchemeFromGrid() {
 
     inputs.forEach(input => {
         const index = parseInt(input.getAttribute('data-index'));
-        
         
         if (CENTER_INDICES.includes(index)) {
              newMap[index] = POSITION_TO_LETTER_MAP[index] || DEFAULT_POSITION_TO_LETTER_MAP[index];
