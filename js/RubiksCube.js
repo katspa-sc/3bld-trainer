@@ -3269,3 +3269,16 @@ function updateLetterSchemeCache() {
     }
     console.log("Letter scheme cache updated.");
 }
+
+document.addEventListener("click", function(event) {
+    const selectionGrid = document.getElementById("selectionGrid");
+    const letterSelector = document.getElementById("letterSelector");
+
+    if (selectionGrid && selectionGrid.style.display === "block") {
+        if (!selectionGrid.contains(event.target) && !letterSelector.contains(event.target)) {
+            console.log("Clicked outside set selector. Saving and closing...");
+            updateUserDefinedAlgs();
+            selectionGrid.style.display = "none";
+        }
+    }
+});
