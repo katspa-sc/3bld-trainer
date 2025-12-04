@@ -1435,10 +1435,6 @@ class SolveTime {
     }
 }
 
-const nextScrambleButton = document.querySelector('button[name="nextScrambleButton"]');
-if (nextScrambleButton)
-    nextScrambleButton.addEventListener('click', nextScramble);
-
 const showSolutionButton = document.querySelector('button[name="showSolutionButton"]');
 if (showSolutionButton)
     showSolutionButton.addEventListener('click', displayAlgorithmForPreviousTest);
@@ -2526,8 +2522,6 @@ async function fetchAlgs() {
 document.addEventListener("DOMContentLoaded", loadCachedAlgs);
 
 document.getElementById("fetchAlgsButton").addEventListener("click", fetchAlgs);
-
-document.getElementById("nextScrambleButton").addEventListener("click", nextScramble);
 
 document.addEventListener("DOMContentLoaded", function () {
     
