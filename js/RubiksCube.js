@@ -9,7 +9,6 @@ let previousCycle = "";
 let sessionQueue = [];
 let upcomingAlgTest = null;
 
-// Helper to check if two indices are on the same piece
 function getPieceGroupId(faceletIndex, type) {
     const groups = type === 'corner' ? PIECE_GEOMETRY.corners : PIECE_GEOMETRY.edges;
     return groups.findIndex(group => group.includes(faceletIndex));
@@ -46,14 +45,12 @@ let currentDrillingPair = null;
 let isSecondInPair = false;
 let totalDrillPairs = 0;
 
-let isFirstDrillRun = true;  
 let shouldReadDrillTTS = true; 
 
 function initializeDrillingPairs(algsFromTextarea) {
     console.log("Initializing drilling session from textbox content...");
     
     const fullAlgMap = new Map(fetchedAlgs.map(item => [item.value.trim(), item.key.trim()]));
-    
     const inverseKeyMap = new Map();
     fetchedAlgs.forEach(item => {
         const inverseKey = item.key[1] + item.key[0];
@@ -124,7 +121,6 @@ function initializeSession() {
 
         initializeDrillingPairs(cleanedAlgs);
         sessionQueue = drillingPairs.flat();
-        isFirstDrillRun = true;
     } else {
         const algList = createAlgList();
         for (let i = algList.length - 1; i > 0; i--) {
@@ -132,7 +128,6 @@ function initializeSession() {
             [algList[i], algList[j]] = [algList[j], algList[i]];
         }
         sessionQueue = algList;
-        isFirstRun = true;
     }
 
     repetitionCounter = 0;
@@ -568,24 +563,9 @@ realScrambles.addEventListener("click", function () {
     localStorage.setItem("realScrambles", this.checked);
 });
 
-var randAUF = document.getElementById("randAUF");
-randAUF.addEventListener("click", function () {
-    localStorage.setItem("randAUF", this.checked);
-});
-
 var prescramble = document.getElementById("prescramble");
 prescramble.addEventListener("click", function () {
     localStorage.setItem("prescramble", this.checked);
-});
-
-var randomizeSMirror = document.getElementById("randomizeSMirror");
-randomizeSMirror.addEventListener("click", function () {
-    localStorage.setItem("randomizeSMirror", this.checked);
-});
-
-var randomizeMMirror = document.getElementById("randomizeMMirror");
-randomizeMMirror.addEventListener("click", function () {
-    localStorage.setItem("randomizeMMirror", this.checked);
 });
 
 var goInOrder = document.getElementById("goInOrder");
@@ -600,21 +580,6 @@ goToNextCase.addEventListener("click", function () {
         alert("Note: This option has no effect when using the virtual cube.")
     }
     localStorage.setItem("goToNextCase", this.checked);
-});
-
-var mirrorAllAlgs = document.getElementById("mirrorAllAlgs");
-mirrorAllAlgs.addEventListener("click", function () {
-    localStorage.setItem("mirrorAllAlgs", this.checked);
-});
-
-var mirrorAllAlgsAcrossS = document.getElementById("mirrorAllAlgsAcrossS");
-mirrorAllAlgsAcrossS.addEventListener("click", function () {
-    localStorage.setItem("mirrorAllAlgsAcrossS", this.checked);
-});
-
-var fullCN = document.getElementById("fullCN");
-fullCN.addEventListener("click", function () {
-    localStorage.setItem("fullCN", this.checked);
 });
 
 var clearTimes = document.getElementById("clearTimes");
@@ -934,7 +899,7 @@ function reTestAlg() {
     updateVirtualCube();
 }
 
-function updateTrainer(scramble, solutions, algorithm, timer) {
+function updateTrainer(scramble, algorithm, timer) {
     if (scramble != null) {
         document.getElementById("scramble").innerHTML = scramble;
     }
@@ -972,7 +937,6 @@ function displayAlgorithmFromHistory(index) {
 
     updateTrainer(
         "<span>" + algTest.orientRandPart + "</span>" + " " + algTest.scramble,
-        algTest.solutions.join("<br><br>"),
         algTest.preorientation + algTest.scramble,
         timerText
     );
@@ -993,38 +957,26 @@ function displayAlgorithmForPreviousTest(reTest = true, showSolution = true) {//
     if (showSolution) {
         updateTrainer("<span>" + lastTest.orientRandPart + "</span>" + " " + lastTest.scramble, lastTest.solutions.join("<br><br>"), null, null);
     } else {
-        updateTrainer(null, null, null, null);
+        updateTrainer(null, null, null);
     }
 }
 
-let lastSelectedAlgorithm = null;
-
-let remainingAlgs = []; 
-let isFirstRun = true; 
-
-function getNextAlgFromSession() {
-    
+function getNextAlgFromSession() { 
     if (sessionQueue.length === 0) {
         if (isDrillingMode) {
-            if (!isFirstDrillRun) {
-                const jingle = document.getElementById("completionJingle");
-                jingle.volume = 0.5;
-                jingle.play();
-            }
-            isFirstDrillRun = false;
+            const jingle = document.getElementById("completionJingle");
+            jingle.volume = 0.5;
+            jingle.play();
             
             const boxAlgs = document.getElementById("userDefinedAlgs").value.split("\n").filter(alg => alg.trim() !== "");
             initializeDrillingPairs(boxAlgs);
             sessionQueue = drillingPairs.flat();
             if (sessionQueue.length === 0) return null;
         } else { 
-            if (!isFirstRun) {
-                const jingle = document.getElementById("completionJingle");
-                jingle.volume = 0.5;
-                jingle.play();
-            }
-            isFirstRun = false;
-            
+            const jingle = document.getElementById("completionJingle");
+            jingle.volume = 0.5;
+            jingle.play();
+
             const algList = createAlgList();
             if (algList.length === 0) return null;
             for (let i = algList.length - 1; i > 0; i--) {
@@ -1034,15 +986,14 @@ function getNextAlgFromSession() {
             sessionQueue = algList;
         }
     }
-
-    
+  
     if (isDrillingMode) {
          const completedPairs = totalDrillPairs - Math.ceil(sessionQueue.length / 2);
-         document.getElementById("progressDisplay").innerText = `Progress: ${completedPairs}/${totalDrillPairs}`;
+         document.getElementById("progressDisplay").innerText = `Progress: ${completedPairs + 1}/${totalDrillPairs}`;
     } else {
         const totalAlgs = createAlgList().length;
         const currentIndex = totalAlgs - sessionQueue.length;
-        document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex}/${totalAlgs}`;
+        document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex + 1}/${totalAlgs}`;
     }
 
     return sessionQueue.shift();
@@ -1089,7 +1040,6 @@ function stopTimer(logTime = true) {
     }
 
     if (document.getElementById("timer").style.display == 'none') {
-        
         return;
     }
 
@@ -1287,9 +1237,8 @@ function nextScramble(displayReady = true) {
     updateLastCycleInfo();
     hideScramble();
 
-    if (!upcomingAlgTest) {
-        upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
-    }
+    upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
+
 
     const currentAlgTest = upcomingAlgTest;
     
@@ -1304,7 +1253,7 @@ function nextScramble(displayReady = true) {
         speakText(parseLettersForTTS(currentAlgTest.cycleLetters.split("")));
     }
 
-    upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
+   // upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
 
     document.getElementById("cycle").innerHTML = currentAlgTest.cycleLetters;
     const upcomingCycleElement = document.getElementById("upcoming_cycle");
@@ -2578,6 +2527,8 @@ document.addEventListener("DOMContentLoaded", loadCachedAlgs);
 
 document.getElementById("fetchAlgsButton").addEventListener("click", fetchAlgs);
 
+document.getElementById("nextScrambleButton").addEventListener("click", nextScramble);
+
 document.addEventListener("DOMContentLoaded", function () {
     
     const selectionGrid = document.getElementById("selectionGrid");
@@ -2958,8 +2909,6 @@ function showPairSelectionGrid(setName) {
         })
         .sort(customComparator);
 
-    // --- The rest of the function remains the same (Drawing the UI) ---
-
     pairs.forEach(pair => {
         if (!(pair in stickerState)) {
             stickerState[pair] = true; 
@@ -2969,7 +2918,6 @@ function showPairSelectionGrid(setName) {
     const colorGroups = {};
     pairs.forEach(pair => {
         const colorLetter = pair[0] === setName ? pair[1] : pair[0];
-        // Handle cases where color might be missing in default map
         const defaultColorInfo = LETTER_COLORS[colorLetter] || { background: "grey" };
         const background = defaultColorInfo.background;
         
@@ -3182,7 +3130,6 @@ function getPieceNotation(cycleLetters) {
         }
 
         const standardLetter = DEFAULT_POSITION_TO_LETTER_MAP[index];
-
         return notationMap[standardLetter];
     });
 
@@ -3240,12 +3187,10 @@ async function fetchAndApplyPartialFilter() {
             alert("No algorithms found in the partial sheet.");
             return;
         }
-
         
         const commutators = partialList
             .map(pair => pair.value.trim())
             .filter(comm => comm !== "");
-
         
         document.getElementById("userDefinedAlgs").value = commutators.join("\n");
 
@@ -3281,16 +3226,11 @@ async function fetchAlgorithms(proxyUrl) {
 
 document.getElementById("applyPartialFilterButton").addEventListener("click", fetchAndApplyPartialFilter);
 
-/**
- * Provides visual feedback for a successful solve by flashing
- * the background green and changing the timer color temporarily.
- */
 function showSuccessFeedback() {
     if (!isVisualFeedbackEnabled) {
         return;
     }
     const body = document.body;
-    const timerElement = document.getElementById("timer");
 
     body.classList.add("solve-success-flash");
     setTimeout(() => {
@@ -3308,18 +3248,11 @@ visualFeedbackCheckbox.checked = isVisualFeedbackEnabled;
 localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled); 
 
 visualFeedbackCheckbox.addEventListener("change", function () {
-    
     isVisualFeedbackEnabled = this.checked;
-    
     localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled);
-
     console.log(`Visual feedback flash switched to: ${isVisualFeedbackEnabled ? "enabled" : "disabled"}`);
 });
 
-/**
- * Reads inputs from the visual grid and updates the global map.
- * Returns the object map to be saved as JSON.
- */
 function applySchemeFromGrid() {
     const inputs = document.querySelectorAll('.sticker-input');
     const newMap = {};
@@ -3499,7 +3432,6 @@ function updateLetterSchemeCache() {
     for (let i = 0; i < 54; i++) {
         const letter = POSITION_TO_LETTER_MAP[i];
         
-        // Ensure we have a valid letter
         if (letter && typeof letter === 'string' && letter !== "-" && letter.trim() !== "") {
             const cleanLetter = letter.trim();
 
@@ -3530,3 +3462,4 @@ document.addEventListener("click", function(event) {
         }
     }
 });
+
