@@ -1,4 +1,4 @@
-const APP_VERSION = "v1.0.2 - clipboard copies adjusted to match custom lettering schemes"; 
+const APP_VERSION = "v1.0.3 - pair selector rework"; 
 
 const regularDrillOptions = [
     "klik", "bip",
