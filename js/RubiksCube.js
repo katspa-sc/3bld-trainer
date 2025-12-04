@@ -2700,14 +2700,13 @@ document.getElementById("letterSelector").addEventListener("click", function () 
                         return btn;
                     };
 
-                    // Collect buttons for this letter
                     rowLeftBtns.push(createBtn('first'));
                     rowRightBtns.push(createBtn('second'));
                 }
             }
         });
 
-        // SWAP LOGIC: Swap the last two buttons in the row (e.g., A B C D -> A B D C)
+        // Swap the last two buttons in the row (e.g., A B C D -> A B D C)
         if (rowLeftBtns.length >= 2) {
             const len = rowLeftBtns.length;
             // Swap left group
@@ -2842,30 +2841,34 @@ function showPairSelectionGrid(setName) {
     const leftPairGrid = document.getElementById("leftPairGrid");
     const rightPairGrid = document.getElementById("rightPairGrid");
     const pairSelectionTitle = document.getElementById("pairSelectionTitle");
-    
+
     pairSelectionTitle.textContent = `Select Pairs for Letter ${setName}`;
-    
+
+    let instructionLabel = document.getElementById("pairSelectionInstructions");
+    if (!instructionLabel) {
+        instructionLabel = document.createElement("div");
+        instructionLabel.id = "pairSelectionInstructions";
+        instructionLabel.style.textAlign = "center";
+        instructionLabel.style.fontSize = "0.9rem";
+        instructionLabel.style.marginBottom = "10px";
+        instructionLabel.style.opacity = "0.8";
+        pairSelectionTitle.parentNode.insertBefore(instructionLabel, pairSelectionTitle.nextSibling);
+    }
+    instructionLabel.textContent = "Right-click to toggle pair & inverse";
+
     leftPairGrid.innerHTML = "";
     rightPairGrid.innerHTML = "";
-    
-    // 1. Determine Context (Corner vs Edge)
-    const mode = currentMode; 
-    
-    // 2. Identify Buffer Group
+
+    const mode = currentMode;
     const BUFFER_INDICES = mode === "edge" ? [7, 19] : [8, 9, 20];
     const bufferGroupId = getPieceGroupId(BUFFER_INDICES[0], mode);
 
-    // 3. Get lookups
     const letterToMap = mode === "edge" ? cachedEdgeLetterToIndex : cachedCornerLetterToIndex;
-    const primaryIndex = letterToMap[setName];
-    
-    // Get all available letters
-    const activeLetters = getActiveSchemeLetters(); 
+    const activeLetters = getActiveSchemeLetters();
 
-    // 4. Generate Pairs with Geometric Filtering
     const pairs = activeLetters
-        .flatMap(letter => [`${setName}${letter}`, `${letter}${setName}`]) 
-        .filter((pair, index, self) => self.indexOf(pair) === index) 
+        .flatMap(letter => [`${setName}${letter}`, `${letter}${setName}`])
+        .filter((pair, index, self) => self.indexOf(pair) === index)
         .filter(pair => {
             const l1 = pair[0];
             const l2 = pair[1];
@@ -2889,7 +2892,7 @@ function showPairSelectionGrid(setName) {
 
     pairs.forEach(pair => {
         if (!(pair in stickerState)) {
-            stickerState[pair] = true; 
+            stickerState[pair] = true;
         }
     });
 
@@ -2898,7 +2901,7 @@ function showPairSelectionGrid(setName) {
         const colorLetter = pair[0] === setName ? pair[1] : pair[0];
         const defaultColorInfo = LETTER_COLORS[colorLetter] || { background: "grey" };
         const background = defaultColorInfo.background;
-        
+
         if (!colorGroups[background]) {
             colorGroups[background] = [];
         }
@@ -2913,12 +2916,12 @@ function showPairSelectionGrid(setName) {
 
         colorGroups[colorName].forEach(pair => {
             const button = document.createElement("button");
-            button.classList.add("pairButton"); 
+            button.classList.add("pairButton");
 
             const safeColorName = colorName.toLowerCase().replace(/\s+/g, '-');
-            button.classList.add(`sticker-${safeColorName}`); 
+            button.classList.add(`sticker-${safeColorName}`);
             button.textContent = pair;
-            button.dataset.pair = pair; 
+            button.dataset.pair = pair;
 
             if (!stickerState[pair]) {
                 button.classList.add("untoggled");
@@ -2926,39 +2929,31 @@ function showPairSelectionGrid(setName) {
 
             const isLeftSide = pair.startsWith(setName);
 
-            // --- CHANGED LOGIC STARTS HERE ---
-
-            // 1. Left Click: Toggle ONLY this specific pair
             button.addEventListener("click", () => {
                 const newState = !stickerState[pair];
                 stickerState[pair] = newState;
                 button.classList.toggle("untoggled", !newState);
-                saveStickerState(); 
+                saveStickerState();
             });
 
-            // 2. Right Click: Toggle BOTH (Original Linked Behavior)
             button.addEventListener("contextmenu", (e) => {
-                e.preventDefault(); // Prevent browser context menu
+                e.preventDefault();
 
                 const newState = !stickerState[pair];
                 stickerState[pair] = newState;
                 button.classList.toggle("untoggled", !newState);
 
-                // If on the left side, also toggle the reverse pair (Linked Logic)
                 if (isLeftSide) {
                     const reversePair = `${pair[1]}${pair[0]}`;
-                    stickerState[reversePair] = newState; 
+                    stickerState[reversePair] = newState;
 
                     const reverseButton = document.querySelector(`.pairButton[data-pair="${reversePair}"]`);
                     if (reverseButton) {
-                        // Toggle class based on the newState calculated above
                         reverseButton.classList.toggle("untoggled", !newState);
                     }
                 }
-                saveStickerState(); 
+                saveStickerState();
             });
-
-            // --- CHANGED LOGIC ENDS HERE ---
 
             if (isLeftSide) {
                 leftRow.appendChild(button);
@@ -2976,6 +2971,24 @@ function showPairSelectionGrid(setName) {
     });
 
     pairSelectionGrid.style.display = "block";
+
+    const handleOutsideClick = function(event) {
+        const grid = document.getElementById("pairSelectionGrid");
+        
+        if (grid.style.display === "none") {
+            document.removeEventListener("click", handleOutsideClick);
+            return;
+        }
+
+        if (!grid.contains(event.target)) {
+            grid.style.display = "none";
+            document.removeEventListener("click", handleOutsideClick);
+        }
+    };
+
+    setTimeout(() => {
+        document.addEventListener("click", handleOutsideClick);
+    }, 0);
 }
 
 document.getElementById("applyPairSelectionButton").addEventListener("click", function (event) {
