@@ -363,36 +363,42 @@ p.cycle {
 }
 
 .set-btn.face-u, 
+.pairButton.face-u,
 .face-u .sticker-input { 
     background-color: #ffffff; 
     color: #000000; 
 }
 
 .set-btn.face-l, 
+.pairButton.face-l,
 .face-l .sticker-input { 
     background-color: #ffaa00; 
     color: #000000; 
 }
 
 .set-btn.face-f, 
+.pairButton.face-f,
 .face-f .sticker-input { 
     background-color: #00dd00; 
     color: #000000; 
 }
 
-.set-btn.face-r, 
+.set-btn.face-r,
+.pairButton.face-r,
 .face-r .sticker-input { 
     background-color: #ff0000; 
     color: #000000; 
 }
 
 .set-btn.face-b, 
+.pairButton.face-b,
 .face-b .sticker-input { 
     background-color: #0000ff; 
     color: #cfcfcf; 
 }
 
 .set-btn.face-d, 
+.pairButton.face-d,
 .face-d .sticker-input { 
     background-color: #ffff00; 
     color: #000000; 

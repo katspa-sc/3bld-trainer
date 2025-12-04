@@ -6,6 +6,35 @@ let previousCycle = "";
 let sessionQueue = [];
 let upcomingAlgTest = null;
 
+function getIndexToFaceMap() {
+    const map = {};
+    FACE_DEFINITIONS.forEach(face => {
+        face.indices.forEach(idx => map[idx] = face.name);
+    });
+    return map;
+}
+
+function getBufferInfo(mode) {
+    const indices = mode === "edge" ? [7, 19] : [8, 9, 20];
+    const groupId = getPieceGroupId(indices[0], mode);
+    return { indices, groupId };
+}
+
+// 3. Helper to Map Letters directly to Faces (Matches Set Selector Logic)
+function getLetterToFaceMap() {
+    const map = {};
+    FACE_DEFINITIONS.forEach(face => {
+        face.indices.forEach(idx => {
+            // Ensure we use the global map correctly
+            if (typeof POSITION_TO_LETTER_MAP !== 'undefined' && POSITION_TO_LETTER_MAP[idx]) {
+                const letter = POSITION_TO_LETTER_MAP[idx];
+                map[letter] = face.name;
+            }
+        });
+    });
+    return map;
+}
+
 function getPieceGroupId(faceletIndex, type) {
     const groups = type === 'corner' ? PIECE_GEOMETRY.corners : PIECE_GEOMETRY.edges;
     return groups.findIndex(group => group.includes(faceletIndex));
@@ -985,11 +1014,11 @@ function getNextAlgFromSession() {
   
     if (isDrillingMode) {
          const completedPairs = totalDrillPairs - Math.ceil(sessionQueue.length / 2);
-         document.getElementById("progressDisplay").innerText = `Progress: ${completedPairs + 1}/${totalDrillPairs}`;
+         document.getElementById("progressDisplay").innerText = `Progress: ${completedPairs}/${totalDrillPairs}`;
     } else {
         const totalAlgs = createAlgList().length;
         const currentIndex = totalAlgs - sessionQueue.length;
-        document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex + 1}/${totalAlgs}`;
+        document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex}/${totalAlgs}`;
     }
 
     return sessionQueue.shift();
@@ -2547,26 +2576,17 @@ document.getElementById("letterSelector").addEventListener("click", function () 
 
     const titleContainer = document.createElement("div");
     titleContainer.className = "selector-title-container";
-
     const mainTitle = document.createElement("h2");
     mainTitle.textContent = "Select sets to practice";
     mainTitle.className = "selector-main-title";
-
     const subTitle = document.createElement("p");
     subTitle.textContent = "Inverses are separated for easier control";
     subTitle.className = "selector-sub-title";
-
     const countLabel = document.createElement("div");
     countLabel.id = "set-selector-count";
-    countLabel.style.fontSize = "1.2rem";
-    countLabel.style.fontWeight = "bold";
-    countLabel.style.marginTop = "8px";
-    countLabel.style.color = "#4CAF50"; 
+    countLabel.style.cssText = "font-size: 1.2rem; font-weight: bold; margin-top: 8px; color: #4CAF50;";
     countLabel.textContent = "Calculating..."; 
-
-    titleContainer.appendChild(mainTitle);
-    titleContainer.appendChild(subTitle);
-    titleContainer.appendChild(countLabel);
+    titleContainer.append(mainTitle, subTitle, countLabel);
     selectionGrid.appendChild(titleContainer);
 
     const actionsDiv = document.createElement("div");
@@ -2589,7 +2609,6 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         });
         
         fetchedAlgs.forEach(alg => stickerState[alg.key] = newState);
-        
         saveSelectedSets();
         saveStickerState();
         updateActiveAlgCount(); 
@@ -2611,40 +2630,18 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         selectionGrid.style.display = "none";
         initializeSession(); 
     });
-
-    actionsDiv.appendChild(toggleBtn);
-    actionsDiv.appendChild(saveCloseBtn);
-    actionsDiv.appendChild(saveStartBtn);
+    actionsDiv.append(toggleBtn, saveCloseBtn, saveStartBtn);
     selectionGrid.appendChild(actionsDiv);
 
     const labelsDiv = document.createElement("div");
     labelsDiv.className = "set-labels-container";
-    const leftLabel = document.createElement("div");
-    leftLabel.className = "set-label";
-    leftLabel.textContent = "First target";
-    const spacer = document.createElement("div");
-    spacer.className = "set-label-spacer";
-    const rightLabel = document.createElement("div");
-    rightLabel.className = "set-label";
-    rightLabel.textContent = "Second target";
-    labelsDiv.appendChild(leftLabel);
-    labelsDiv.appendChild(spacer);
-    labelsDiv.appendChild(rightLabel);
+    labelsDiv.innerHTML = `<div class="set-label">First target</div><div class="set-label-spacer"></div><div class="set-label">Second target</div>`;
     selectionGrid.appendChild(labelsDiv);
 
-    const faces = [
-        { name: "U", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
-        { name: "L", indices: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
-        { name: "F", indices: [18, 19, 20, 21, 22, 23, 24, 25, 26] },
-        { name: "R", indices: [9, 10, 11, 12, 13, 14, 15, 16, 17] },
-        { name: "B", indices: [45, 46, 47, 48, 49, 50, 51, 52, 53] },
-        { name: "D", indices: [27, 28, 29, 30, 31, 32, 33, 34, 35] }
-    ];
-
-    const BUFFER_INDICES = currentMode === "edge" ? [7, 19] : [8, 9, 20];
+    const { indices: bufferIndices } = getBufferInfo(currentMode); 
     const validIndices = new Set(currentMode === "corner" ? CORNER_FACELET_INDICES : EDGE_FACELET_INDICES);
 
-    faces.forEach(face => {
+    FACE_DEFINITIONS.forEach(face => {
         const rowDiv = document.createElement("div");
         rowDiv.className = "face-row";
         const leftGroup = document.createElement("div");
@@ -2662,16 +2659,14 @@ document.getElementById("letterSelector").addEventListener("click", function () 
                 if (letter && letter.trim() !== "" && letter !== "-" && !faceLetters.has(letter)) {
                     faceLetters.add(letter);
 
-                    // Function to create button
                     const createBtn = (pos) => {
                         const btn = document.createElement("button");
-                        // Use lowercase face name to match CSS
                         btn.className = `set-btn face-${face.name.toLowerCase()}`;
                         btn.textContent = pos === 'first' ? `${letter}_` : `_${letter}`;
                         btn.dataset.letter = letter;
                         btn.dataset.position = pos;
 
-                        const isBuffer = BUFFER_INDICES.includes(index);
+                        const isBuffer = bufferIndices.includes(index);
 
                         if (isBuffer) {
                             btn.classList.add("buffer");
@@ -2706,16 +2701,13 @@ document.getElementById("letterSelector").addEventListener("click", function () 
             }
         });
 
-        // Swap the last two buttons in the row (e.g., A B C D -> A B D C)
+        // Swap last two if needed
         if (rowLeftBtns.length >= 2) {
             const len = rowLeftBtns.length;
-            // Swap left group
             [rowLeftBtns[len - 1], rowLeftBtns[len - 2]] = [rowLeftBtns[len - 2], rowLeftBtns[len - 1]];
-            // Swap right group
             [rowRightBtns[len - 1], rowRightBtns[len - 2]] = [rowRightBtns[len - 2], rowRightBtns[len - 1]];
         }
 
-        // Append buttons to groups
         rowLeftBtns.forEach(btn => leftGroup.appendChild(btn));
         rowRightBtns.forEach(btn => rightGroup.appendChild(btn));
 
@@ -2824,18 +2816,6 @@ const EXCLUDED_DUOS_EDGES = [
     ["U", "Y"], 
 ];
 
-function isExcludedCombination(combination) {
-    const currentExclusions = determineCycleType() === "corner" ? EXCLUDED_TRIOS_CORNERS : EXCLUDED_DUOS_EDGES;
-
-    for (const group of currentExclusions) {
-        const [letter1, letter2] = combination.split("");
-        if (group.includes(letter1) && group.includes(letter2)) {
-            return true; 
-        }
-    }
-    return false; 
-}
-
 function showPairSelectionGrid(setName) {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
     const leftPairGrid = document.getElementById("leftPairGrid");
@@ -2860,8 +2840,9 @@ function showPairSelectionGrid(setName) {
     rightPairGrid.innerHTML = "";
 
     const mode = currentMode;
-    const BUFFER_INDICES = mode === "edge" ? [7, 19] : [8, 9, 20];
-    const bufferGroupId = getPieceGroupId(BUFFER_INDICES[0], mode);
+    const { groupId: bufferGroupId } = getBufferInfo(mode); 
+    
+    const letterToFaceMap = getLetterToFaceMap(); 
 
     const letterToMap = mode === "edge" ? cachedEdgeLetterToIndex : cachedCornerLetterToIndex;
     const activeLetters = getActiveSchemeLetters();
@@ -2872,12 +2853,10 @@ function showPairSelectionGrid(setName) {
         .filter(pair => {
             const l1 = pair[0];
             const l2 = pair[1];
-
             if (l1 === l2) return false;
 
             const idx1 = letterToMap[l1];
             const idx2 = letterToMap[l2];
-
             if (idx1 === undefined || idx2 === undefined) return false;
 
             const g1 = getPieceGroupId(idx1, mode);
@@ -2891,41 +2870,47 @@ function showPairSelectionGrid(setName) {
         .sort(customComparator);
 
     pairs.forEach(pair => {
-        if (!(pair in stickerState)) {
-            stickerState[pair] = true;
-        }
+        if (!(pair in stickerState)) stickerState[pair] = true;
     });
 
-    const colorGroups = {};
+    // Group Pairs by Face using the robust letterToFaceMap
+    const faceGroups = { U: [], L: [], F: [], R: [], B: [], D: [] };
+
     pairs.forEach(pair => {
-        const colorLetter = pair[0] === setName ? pair[1] : pair[0];
-        const defaultColorInfo = LETTER_COLORS[colorLetter] || { background: "grey" };
-        const background = defaultColorInfo.background;
+        const targetLetter = pair.startsWith(setName) ? pair[1] : pair[0];
+        // Look up face by letter directly
+        const faceName = letterToFaceMap[targetLetter];
 
-        if (!colorGroups[background]) {
-            colorGroups[background] = [];
+        if (faceName && faceGroups[faceName]) {
+            faceGroups[faceName].push(pair);
+        } else {
+            // Fallback for letters not on a specific face (shouldn't happen with valid scheme)
+            console.warn(`Could not find face for letter ${targetLetter}`);
         }
-        colorGroups[background].push(pair);
     });
 
-    Object.keys(colorGroups).forEach(colorName => {
+    FACE_DEFINITIONS.forEach(faceDef => {
+        const faceName = faceDef.name;
+        const groupPairs = faceGroups[faceName];
+
+        if (!groupPairs || groupPairs.length === 0) return;
+
         const leftRow = document.createElement("div");
         const rightRow = document.createElement("div");
         leftRow.className = "grid-row";
         rightRow.className = "grid-row";
 
-        colorGroups[colorName].forEach(pair => {
+        groupPairs.forEach(pair => {
             const button = document.createElement("button");
             button.classList.add("pairButton");
-
-            const safeColorName = colorName.toLowerCase().replace(/\s+/g, '-');
-            button.classList.add(`sticker-${safeColorName}`);
+            
+            // Apply the face color class
+            button.classList.add(`face-${faceName.toLowerCase()}`);
+            
             button.textContent = pair;
             button.dataset.pair = pair;
 
-            if (!stickerState[pair]) {
-                button.classList.add("untoggled");
-            }
+            if (!stickerState[pair]) button.classList.add("untoggled");
 
             const isLeftSide = pair.startsWith(setName);
 
@@ -2938,7 +2923,6 @@ function showPairSelectionGrid(setName) {
 
             button.addEventListener("contextmenu", (e) => {
                 e.preventDefault();
-
                 const newState = !stickerState[pair];
                 stickerState[pair] = newState;
                 button.classList.toggle("untoggled", !newState);
@@ -2946,49 +2930,34 @@ function showPairSelectionGrid(setName) {
                 if (isLeftSide) {
                     const reversePair = `${pair[1]}${pair[0]}`;
                     stickerState[reversePair] = newState;
-
                     const reverseButton = document.querySelector(`.pairButton[data-pair="${reversePair}"]`);
-                    if (reverseButton) {
-                        reverseButton.classList.toggle("untoggled", !newState);
-                    }
+                    if (reverseButton) reverseButton.classList.toggle("untoggled", !newState);
                 }
                 saveStickerState();
             });
 
-            if (isLeftSide) {
-                leftRow.appendChild(button);
-            } else {
-                rightRow.appendChild(button);
-            }
+            if (isLeftSide) leftRow.appendChild(button);
+            else rightRow.appendChild(button);
         });
 
-        if (leftRow.children.length > 0) {
-            leftPairGrid.appendChild(leftRow);
-        }
-        if (rightRow.children.length > 0) {
-            rightPairGrid.appendChild(rightRow);
-        }
+        if (leftRow.children.length > 0) leftPairGrid.appendChild(leftRow);
+        if (rightRow.children.length > 0) rightPairGrid.appendChild(rightRow);
     });
 
     pairSelectionGrid.style.display = "block";
 
     const handleOutsideClick = function(event) {
         const grid = document.getElementById("pairSelectionGrid");
-        
         if (grid.style.display === "none") {
             document.removeEventListener("click", handleOutsideClick);
             return;
         }
-
         if (!grid.contains(event.target)) {
             grid.style.display = "none";
             document.removeEventListener("click", handleOutsideClick);
         }
     };
-
-    setTimeout(() => {
-        document.addEventListener("click", handleOutsideClick);
-    }, 0);
+    setTimeout(() => { document.addEventListener("click", handleOutsideClick); }, 0);
 }
 
 document.getElementById("applyPairSelectionButton").addEventListener("click", function (event) {
