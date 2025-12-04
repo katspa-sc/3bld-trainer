@@ -30,6 +30,7 @@ const SOLVED_POSITIONS = [
     [5, 36], [5, 37], [5, 38], [5, 39], [5, 40], [5, 41], [5, 42], [5, 43], [5, 44], // L 
     [6, 45], [6, 46], [6, 47], [6, 48], [6, 49], [6, 50], [6, 51], [6, 52], [6, 53]  // B 
 ];
+
 const POSITION_TO_LETTER_MAP = {
     0: 'A', 1: 'A', 2: 'O', 3: 'I', 4: 'UC', 5: 'O', 6: 'I', 7: 'Y', 8: 'Y',
     9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
@@ -67,6 +68,8 @@ const HANUS_LETTER_MAP = {
 };
 
 const CENTER_INDICES = [4, 13, 22, 31, 40, 49];
+const CORNER_FACELET_INDICES = [0, 2, 6, 8, 9, 11, 15, 17, 18, 20, 24, 26, 27, 29, 33, 35, 36, 38, 42, 44, 45, 47, 51, 53];
+const EDGE_FACELET_INDICES = [1, 3, 5, 7, 10, 12, 14, 16, 19, 21, 23, 25, 28, 30, 32, 34, 37, 39, 41, 43, 46, 48, 50, 52];
 
 // Maps for edge and corner piece notation
 const EDGE_PIECE_MAP = {
@@ -125,7 +128,7 @@ const PIECE_GEOMETRY = {
         [0, 36, 47],  // UBL (U0, L0, B2)
         [2, 45, 11],  // UBR (U2, B0, R2)
         [8, 20, 9],   // UFR (U8, F2, R0) - Standard Corner Buffer
-        [6, 18, 38],  // UFL (U6, F0, L2) - Corrected
+        [6, 18, 38],  // UFL (U6, F0, L2)
         [27, 24, 44], // DFL (D0, F6, L8)
         [29, 26, 15], // DFR (D2, F8, R6)
         [35, 51, 17], // DBR (D8, B6, R8)
@@ -682,13 +685,6 @@ const LETTER_PAIR_TO_WORD = {
     'ZW': 'zet wu',
     'ZZ': 'zet zet'
 }
-
-var keypadLayout = [
-    ["b", "S'", "E", "f'", "x", "f", "E'", "S", "b"],
-    ["z'", "l'", "L'", "U'", "M'", "U", "R", "r", "z"],
-    ["y'", "l", "L", "F'", "M", "F", "R'", "r'", "y"],
-    ["d", "B", "u'", "D", "x'", "D'", "u", "B'", "d'"]
-]
 
 var defaults = {
     "useVirtual": true,

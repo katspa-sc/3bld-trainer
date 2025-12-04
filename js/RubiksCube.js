@@ -1,6 +1,3 @@
-const CORNER_FACELET_INDICES = [0, 2, 6, 8, 9, 11, 15, 17, 18, 20, 24, 26, 27, 29, 33, 35, 36, 38, 42, 44, 45, 47, 51, 53];
-const EDGE_FACELET_INDICES = [1, 3, 5, 7, 10, 12, 14, 16, 19, 21, 23, 25, 28, 30, 32, 34, 37, 39, 41, 43, 46, 48, 50, 52];
-
 let cachedEdgeLetterToIndex = {};
 let cachedCornerLetterToIndex = {};
 
@@ -486,7 +483,6 @@ function showPage() {
 }
 
 for (var setting in defaults) {
-    
     if (typeof (defaults[setting]) === "boolean") {
         var previousSetting = localStorage.getItem(setting);
         if (previousSetting == null) {
@@ -2853,50 +2849,38 @@ function showPairSelectionGrid(setName) {
     rightPairGrid.innerHTML = "";
     
     // 1. Determine Context (Corner vs Edge)
-    const mode = currentMode; // "corner" or "edge"
+    const mode = currentMode; 
     
-    // 2. Identify Buffer Group based on standard scheme assumptions or configuration
-    // (Matches logic in letterSelector: Edge=UF[7,19], Corner=UFR[8,9,20])
+    // 2. Identify Buffer Group
     const BUFFER_INDICES = mode === "edge" ? [7, 19] : [8, 9, 20];
     const bufferGroupId = getPieceGroupId(BUFFER_INDICES[0], mode);
 
     // 3. Get lookups
     const letterToMap = mode === "edge" ? cachedEdgeLetterToIndex : cachedCornerLetterToIndex;
-    
-    // Get index of the primary letter (setName)
     const primaryIndex = letterToMap[setName];
-    const primaryGroupId = primaryIndex !== undefined ? getPieceGroupId(primaryIndex, mode) : -1;
-
+    
     // Get all available letters
     const activeLetters = getActiveSchemeLetters(); 
 
     // 4. Generate Pairs with Geometric Filtering
     const pairs = activeLetters
-        .flatMap(letter => [`${setName}${letter}`, `${letter}${setName}`]) // Generate candidates
-        .filter((pair, index, self) => self.indexOf(pair) === index) // Unique
+        .flatMap(letter => [`${setName}${letter}`, `${letter}${setName}`]) 
+        .filter((pair, index, self) => self.indexOf(pair) === index) 
         .filter(pair => {
             const l1 = pair[0];
             const l2 = pair[1];
 
-            // A. Identity Check
             if (l1 === l2) return false;
 
-            // Get indices from cache
             const idx1 = letterToMap[l1];
             const idx2 = letterToMap[l2];
 
-            // Safety check: if letters aren't in map, exclude
             if (idx1 === undefined || idx2 === undefined) return false;
 
             const g1 = getPieceGroupId(idx1, mode);
             const g2 = getPieceGroupId(idx2, mode);
 
-            // B. Geometric Check: Are they on the same piece?
             if (g1 === g2) return false;
-
-            // C. Buffer Check: Is either piece the buffer?
-            // (Note: Usually we don't shoot TO buffer, and we don't start FROM buffer in pairs list
-            // unless we are doing float handling, but standard practice is to exclude buffer stickers)
             if (g1 === bufferGroupId || g2 === bufferGroupId) return false;
 
             return true;
@@ -2941,28 +2925,40 @@ function showPairSelectionGrid(setName) {
             }
 
             const isLeftSide = pair.startsWith(setName);
+
+            // --- CHANGED LOGIC STARTS HERE ---
+
+            // 1. Left Click: Toggle ONLY this specific pair
             button.addEventListener("click", () => {
                 const newState = !stickerState[pair];
+                stickerState[pair] = newState;
+                button.classList.toggle("untoggled", !newState);
+                saveStickerState(); 
+            });
 
+            // 2. Right Click: Toggle BOTH (Original Linked Behavior)
+            button.addEventListener("contextmenu", (e) => {
+                e.preventDefault(); // Prevent browser context menu
+
+                const newState = !stickerState[pair];
                 stickerState[pair] = newState;
                 button.classList.toggle("untoggled", !newState);
 
-                // Toggle inverse logic
+                // If on the left side, also toggle the reverse pair (Linked Logic)
                 if (isLeftSide) {
                     const reversePair = `${pair[1]}${pair[0]}`;
                     stickerState[reversePair] = newState; 
 
                     const reverseButton = document.querySelector(`.pairButton[data-pair="${reversePair}"]`);
                     if (reverseButton) {
-                        if (newState) {
-                            reverseButton.classList.remove("untoggled");
-                        } else {
-                            reverseButton.classList.add("untoggled");
-                        }
+                        // Toggle class based on the newState calculated above
+                        reverseButton.classList.toggle("untoggled", !newState);
                     }
                 }
                 saveStickerState(); 
             });
+
+            // --- CHANGED LOGIC ENDS HERE ---
 
             if (isLeftSide) {
                 leftRow.appendChild(button);
