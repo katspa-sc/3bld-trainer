@@ -9,6 +9,12 @@ let previousCycle = "";
 let sessionQueue = [];
 let upcomingAlgTest = null;
 
+// Helper to check if two indices are on the same piece
+function getPieceGroupId(faceletIndex, type) {
+    const groups = type === 'corner' ? PIECE_GEOMETRY.corners : PIECE_GEOMETRY.edges;
+    return groups.findIndex(group => group.includes(faceletIndex));
+}
+
 function tryNotify() {
     const options = isHypeMode ? hypeDrillOptions : regularDrillOptions;
     const text = options[Math.floor(Math.random() * options.length)];
@@ -2849,6 +2855,241 @@ document.querySelectorAll(".gridButton").forEach(button => {
         button.addEventListener("touchend", () => clearTimeout(timeout), { once: true });
     });
 });
+
+const ALL_LETTERS = "AOIEFGHJKLNBPQTSRCDWZ".split(""); 
+
+const EXCLUDED_TRIOS_CORNERS = [
+    ["A", "E", "R"], 
+    ["O", "Q", "N"], 
+    ["I", "J", "F"], 
+    ["C", "G", "L"], 
+    ["D", "K", "P"], 
+    ["W", "B", "T"], 
+    ["Z", "S", "H"], 
+    ["U", "Y", "M"], 
+];
+
+const EXCLUDED_DUOS_EDGES = [
+    ["A", "Q"], 
+    ["O", "M"], 
+    ["I", "E"], 
+    ["F", "L"], 
+    ["G", "Z"], 
+    ["H", "R"], 
+    ["J", "P"], 
+    ["K", "C"], 
+    ["N", "T"], 
+    ["B", "D"], 
+    ["S", "W"], 
+    ["U", "Y"], 
+];
+
+function isExcludedCombination(combination) {
+    const currentExclusions = determineCycleType() === "corner" ? EXCLUDED_TRIOS_CORNERS : EXCLUDED_DUOS_EDGES;
+
+    for (const group of currentExclusions) {
+        const [letter1, letter2] = combination.split("");
+        if (group.includes(letter1) && group.includes(letter2)) {
+            return true; 
+        }
+    }
+    return false; 
+}
+
+function showPairSelectionGrid(setName) {
+    const pairSelectionGrid = document.getElementById("pairSelectionGrid");
+    const leftPairGrid = document.getElementById("leftPairGrid");
+    const rightPairGrid = document.getElementById("rightPairGrid");
+    const pairSelectionTitle = document.getElementById("pairSelectionTitle");
+    
+    pairSelectionTitle.textContent = `Select Pairs for Letter ${setName}`;
+    
+    leftPairGrid.innerHTML = "";
+    rightPairGrid.innerHTML = "";
+    
+    // 1. Determine Context (Corner vs Edge)
+    const mode = currentMode; // "corner" or "edge"
+    
+    // 2. Identify Buffer Group based on standard scheme assumptions or configuration
+    // (Matches logic in letterSelector: Edge=UF[7,19], Corner=UFR[8,9,20])
+    const BUFFER_INDICES = mode === "edge" ? [7, 19] : [8, 9, 20];
+    const bufferGroupId = getPieceGroupId(BUFFER_INDICES[0], mode);
+
+    // 3. Get lookups
+    const letterToMap = mode === "edge" ? cachedEdgeLetterToIndex : cachedCornerLetterToIndex;
+    
+    // Get index of the primary letter (setName)
+    const primaryIndex = letterToMap[setName];
+    const primaryGroupId = primaryIndex !== undefined ? getPieceGroupId(primaryIndex, mode) : -1;
+
+    // Get all available letters
+    const activeLetters = getActiveSchemeLetters(); 
+
+    // 4. Generate Pairs with Geometric Filtering
+    const pairs = activeLetters
+        .flatMap(letter => [`${setName}${letter}`, `${letter}${setName}`]) // Generate candidates
+        .filter((pair, index, self) => self.indexOf(pair) === index) // Unique
+        .filter(pair => {
+            const l1 = pair[0];
+            const l2 = pair[1];
+
+            // A. Identity Check
+            if (l1 === l2) return false;
+
+            // Get indices from cache
+            const idx1 = letterToMap[l1];
+            const idx2 = letterToMap[l2];
+
+            // Safety check: if letters aren't in map, exclude
+            if (idx1 === undefined || idx2 === undefined) return false;
+
+            const g1 = getPieceGroupId(idx1, mode);
+            const g2 = getPieceGroupId(idx2, mode);
+
+            // B. Geometric Check: Are they on the same piece?
+            if (g1 === g2) return false;
+
+            // C. Buffer Check: Is either piece the buffer?
+            // (Note: Usually we don't shoot TO buffer, and we don't start FROM buffer in pairs list
+            // unless we are doing float handling, but standard practice is to exclude buffer stickers)
+            if (g1 === bufferGroupId || g2 === bufferGroupId) return false;
+
+            return true;
+        })
+        .sort(customComparator);
+
+    // --- The rest of the function remains the same (Drawing the UI) ---
+
+    pairs.forEach(pair => {
+        if (!(pair in stickerState)) {
+            stickerState[pair] = true; 
+        }
+    });
+
+    const colorGroups = {};
+    pairs.forEach(pair => {
+        const colorLetter = pair[0] === setName ? pair[1] : pair[0];
+        // Handle cases where color might be missing in default map
+        const defaultColorInfo = LETTER_COLORS[colorLetter] || { background: "grey" };
+        const background = defaultColorInfo.background;
+        
+        if (!colorGroups[background]) {
+            colorGroups[background] = [];
+        }
+        colorGroups[background].push(pair);
+    });
+
+    Object.keys(colorGroups).forEach(colorName => {
+        const leftRow = document.createElement("div");
+        const rightRow = document.createElement("div");
+        leftRow.className = "grid-row";
+        rightRow.className = "grid-row";
+
+        colorGroups[colorName].forEach(pair => {
+            const button = document.createElement("button");
+            button.classList.add("pairButton"); 
+
+            const safeColorName = colorName.toLowerCase().replace(/\s+/g, '-');
+            button.classList.add(`sticker-${safeColorName}`); 
+            button.textContent = pair;
+            button.dataset.pair = pair; 
+
+            if (!stickerState[pair]) {
+                button.classList.add("untoggled");
+            }
+
+            const isLeftSide = pair.startsWith(setName);
+            button.addEventListener("click", () => {
+                const newState = !stickerState[pair];
+
+                stickerState[pair] = newState;
+                button.classList.toggle("untoggled", !newState);
+
+                // Toggle inverse logic
+                if (isLeftSide) {
+                    const reversePair = `${pair[1]}${pair[0]}`;
+                    stickerState[reversePair] = newState; 
+
+                    const reverseButton = document.querySelector(`.pairButton[data-pair="${reversePair}"]`);
+                    if (reverseButton) {
+                        if (newState) {
+                            reverseButton.classList.remove("untoggled");
+                        } else {
+                            reverseButton.classList.add("untoggled");
+                        }
+                    }
+                }
+                saveStickerState(); 
+            });
+
+            if (isLeftSide) {
+                leftRow.appendChild(button);
+            } else {
+                rightRow.appendChild(button);
+            }
+        });
+
+        if (leftRow.children.length > 0) {
+            leftPairGrid.appendChild(leftRow);
+        }
+        if (rightRow.children.length > 0) {
+            rightPairGrid.appendChild(rightRow);
+        }
+    });
+
+    pairSelectionGrid.style.display = "block";
+}
+
+document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
+    const pairSelectionGrid = document.getElementById("pairSelectionGrid");
+    pairSelectionGrid.style.display = "none";
+
+    saveStickerState();
+    updateActiveAlgCount();
+    updateUserDefinedAlgs();
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const selectionGrid = document.getElementById("selectionGrid");
+
+    const existingResetButton = selectionGrid.querySelector(".reset-button");
+    if (!existingResetButton) {
+        const resetButton = document.createElement("button");
+        resetButton.textContent = "Reset All Sets and Stickers";
+        resetButton.className = "reset-button"; 
+        resetButton.addEventListener("click", () => {
+            Object.keys(selectedSets).forEach(setName => {
+                selectedSets[setName] = true; 
+            });
+
+            const allStickerKeys = Object.keys(stickerState); 
+            updateStickerState(allStickerKeys); 
+
+            document.querySelectorAll(".gridButton").forEach(button => {
+                const setName = button.dataset.letter;
+                button.classList.remove("untoggled"); 
+            });
+            saveSelectedSets();
+            console.log("All sets and stickers reset to toggled state.");
+        });
+        selectionGrid.appendChild(resetButton);
+    }
+});
+
+function updateStickerState(keysWithValues) {
+    console.log("Updating sticker state...");
+    Object.keys(stickerState).forEach(key => {
+        stickerState[key] = false;
+    });
+    
+    keysWithValues.forEach(key => {
+        stickerState[key] = true;
+    });
+
+    console.log("Updated sticker state:", stickerState);
+
+    saveStickerState();
+}
 
 function saveSelectedSets() {
     localStorage.setItem(getStorageKey("selectedSets"), JSON.stringify(selectedSets));
