@@ -1,6 +1,3 @@
-const CORNER_FACELET_INDICES = [0, 2, 6, 8, 9, 11, 15, 17, 18, 20, 24, 26, 27, 29, 33, 35, 36, 38, 42, 44, 45, 47, 51, 53];
-const EDGE_FACELET_INDICES = [1, 3, 5, 7, 10, 12, 14, 16, 19, 21, 23, 25, 28, 30, 32, 34, 37, 39, 41, 43, 46, 48, 50, 52];
-
 let cachedEdgeLetterToIndex = {};
 let cachedCornerLetterToIndex = {};
 
@@ -8,6 +5,40 @@ let previousScramble = "";
 let previousCycle = "";
 let sessionQueue = [];
 let upcomingAlgTest = null;
+
+function getIndexToFaceMap() {
+    const map = {};
+    FACE_DEFINITIONS.forEach(face => {
+        face.indices.forEach(idx => map[idx] = face.name);
+    });
+    return map;
+}
+
+function getBufferInfo(mode) {
+    const indices = mode === "edge" ? [7, 19] : [8, 9, 20];
+    const groupId = getPieceGroupId(indices[0], mode);
+    return { indices, groupId };
+}
+
+// 3. Helper to Map Letters directly to Faces (Matches Set Selector Logic)
+function getLetterToFaceMap() {
+    const map = {};
+    FACE_DEFINITIONS.forEach(face => {
+        face.indices.forEach(idx => {
+            // Ensure we use the global map correctly
+            if (typeof POSITION_TO_LETTER_MAP !== 'undefined' && POSITION_TO_LETTER_MAP[idx]) {
+                const letter = POSITION_TO_LETTER_MAP[idx];
+                map[letter] = face.name;
+            }
+        });
+    });
+    return map;
+}
+
+function getPieceGroupId(faceletIndex, type) {
+    const groups = type === 'corner' ? PIECE_GEOMETRY.corners : PIECE_GEOMETRY.edges;
+    return groups.findIndex(group => group.includes(faceletIndex));
+}
 
 function tryNotify() {
     const options = isHypeMode ? hypeDrillOptions : regularDrillOptions;
@@ -40,14 +71,12 @@ let currentDrillingPair = null;
 let isSecondInPair = false;
 let totalDrillPairs = 0;
 
-let isFirstDrillRun = true;  
 let shouldReadDrillTTS = true; 
 
 function initializeDrillingPairs(algsFromTextarea) {
     console.log("Initializing drilling session from textbox content...");
     
     const fullAlgMap = new Map(fetchedAlgs.map(item => [item.value.trim(), item.key.trim()]));
-    
     const inverseKeyMap = new Map();
     fetchedAlgs.forEach(item => {
         const inverseKey = item.key[1] + item.key[0];
@@ -118,7 +147,6 @@ function initializeSession() {
 
         initializeDrillingPairs(cleanedAlgs);
         sessionQueue = drillingPairs.flat();
-        isFirstDrillRun = true;
     } else {
         const algList = createAlgList();
         for (let i = algList.length - 1; i > 0; i--) {
@@ -126,7 +154,6 @@ function initializeSession() {
             [algList[i], algList[j]] = [algList[j], algList[i]];
         }
         sessionQueue = algList;
-        isFirstRun = true;
     }
 
     repetitionCounter = 0;
@@ -376,7 +403,6 @@ function applyMoves(moves) {
     let ori = cube.wcaOrient();
     doAlg(alg.cube.invert(ori), false);
     let startingRotation = ori;
-  
 
     let fixPivotRotation = "";
 
@@ -393,13 +419,9 @@ function applyMoves(moves) {
 
         if (pivotIndex != -1) {
             fixPivotRotation = findRotationToFixPivot(pivotIndex);
-            
-
-            
         }
 
         cube.doAlgorithm(alg.cube.invert(tmp));
-
         console.log("doing alg: ", lastTest.solutions[0]);
     }
 
@@ -425,8 +447,6 @@ function applyMoves(moves) {
         alg.cube.invert(startingRotation)
         + " " +
         fixPivotRotation
-        
-
     );
 
     if (fixPivotRotation.length > 0)
@@ -492,7 +512,6 @@ function showPage() {
 }
 
 for (var setting in defaults) {
-    
     if (typeof (defaults[setting]) === "boolean") {
         var previousSetting = localStorage.getItem(setting);
         if (previousSetting == null) {
@@ -569,24 +588,9 @@ realScrambles.addEventListener("click", function () {
     localStorage.setItem("realScrambles", this.checked);
 });
 
-var randAUF = document.getElementById("randAUF");
-randAUF.addEventListener("click", function () {
-    localStorage.setItem("randAUF", this.checked);
-});
-
 var prescramble = document.getElementById("prescramble");
 prescramble.addEventListener("click", function () {
     localStorage.setItem("prescramble", this.checked);
-});
-
-var randomizeSMirror = document.getElementById("randomizeSMirror");
-randomizeSMirror.addEventListener("click", function () {
-    localStorage.setItem("randomizeSMirror", this.checked);
-});
-
-var randomizeMMirror = document.getElementById("randomizeMMirror");
-randomizeMMirror.addEventListener("click", function () {
-    localStorage.setItem("randomizeMMirror", this.checked);
 });
 
 var goInOrder = document.getElementById("goInOrder");
@@ -601,21 +605,6 @@ goToNextCase.addEventListener("click", function () {
         alert("Note: This option has no effect when using the virtual cube.")
     }
     localStorage.setItem("goToNextCase", this.checked);
-});
-
-var mirrorAllAlgs = document.getElementById("mirrorAllAlgs");
-mirrorAllAlgs.addEventListener("click", function () {
-    localStorage.setItem("mirrorAllAlgs", this.checked);
-});
-
-var mirrorAllAlgsAcrossS = document.getElementById("mirrorAllAlgsAcrossS");
-mirrorAllAlgsAcrossS.addEventListener("click", function () {
-    localStorage.setItem("mirrorAllAlgsAcrossS", this.checked);
-});
-
-var fullCN = document.getElementById("fullCN");
-fullCN.addEventListener("click", function () {
-    localStorage.setItem("fullCN", this.checked);
 });
 
 var clearTimes = document.getElementById("clearTimes");
@@ -672,11 +661,8 @@ try {
 
 function getRotationMap(moves) {
     let rotationMap = {};
-
     let rotationCube = new RubiksCube();
-   
     rotationCube.doAlgorithm(moves);
-    
 
     let faces = "URFDLB";
     for (let i = 0; i < 6; ++i) {
@@ -690,10 +676,7 @@ function updateVirtualCube(initialRotations = holdingOrientation.value + ' ' + c
     //console.log("preorientation: ", currentPreorientation);
     vc.cubeString = cube.toString();
     let initialMaskedCubeString = cube.toInitialMaskedString(initialMask.value);
-    
-
     let rotationMap = getRotationMap(initialRotations);
-    
 
     for (let k = 0; k < 54; ++k) {
         if (vc[k] != 'x') {
@@ -719,7 +702,6 @@ function doAlg(algorithm, updateTimer = false) {
             startTimer();
         }
     }
-
     
     if (timerIsRunning && cube.isSolved(initialMask.value) && isUsingVirtualCube()) {
         if (updateTimer) {
@@ -766,19 +748,9 @@ function getPremoves(length) {
 function obfuscate(algorithm, numPremoves = 3, minLength = 16) {
 
     return algorithm;
-
-    //Cube.initSolver();
-    var premoves = getPremoves(numPremoves);
-    var rc = new RubiksCube();
-    rc.doAlgorithm(alg.cube.invert(premoves) + algorithm);
-    var orient = alg.cube.invert(rc.wcaOrient());
-    var solution = alg.cube.simplify(premoves + (alg.cube.invert(rc.solution())) + orient).replace(/2'/g, "2");
-    return solution.split(" ").length >= minLength ? solution : obfuscate(algorithm, numPremoves + 1, minLength);
-
 }
 
 function addAUFs(algArr) {
-
     var rand1 = getRandAuf("U");
     var rand2 = getRandAuf("U");
     //algorithm = getRandAuf() + algorithm + " " +  getRandAuf()
@@ -811,9 +783,6 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
 
     const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
     let letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
-
-    
-
     const cycleLetters = letters.join('');
 
     return [cycleLetters, scramble];
@@ -905,17 +874,13 @@ function testAlg(algTest, addToHistory = true) {
     var cycleLettersElement = document.getElementById("cycle");
     cycleLettersElement.innerHTML = algTest.cycleLetters;
 
-    
-
     cube.resetCube();
     doAlg(algTest.scramble, false);
     updateVirtualCube();
 
     if (addToHistory) {
         algorithmHistory.push(algTest);
-    }
-    
-
+    } 
 }
 
 function updateAlgsetStatistics(algList) {
@@ -953,18 +918,16 @@ function reTestAlg() {
     if (lastTest == undefined) {
         return;
     }
+
     cube.resetCube();
     doAlg(lastTest.scramble, false);
-    
     updateVirtualCube();
-
 }
 
-function updateTrainer(scramble, solutions, algorithm, timer) {
+function updateTrainer(scramble, algorithm, timer) {
     if (scramble != null) {
         document.getElementById("scramble").innerHTML = scramble;
     }
-    
 
     if (algorithm != null) {
         cube.resetCube();
@@ -980,12 +943,7 @@ function fixAlgorithms(algorithms) {
     //for now this just removes brackets
     var i = 0;
     for (; i < algorithms.length; i++) {
-        
         let currAlg = algorithms[i].replace(/\[|\]|\)|\(/g, "");
-        
-
-        
-
     }
     return algorithms;
     //TODO Allow commutators
@@ -993,7 +951,6 @@ function fixAlgorithms(algorithms) {
 }
 
 function displayAlgorithmFromHistory(index) {
-
     var algTest = algorithmHistory[index];
 
     var timerText;
@@ -1005,7 +962,6 @@ function displayAlgorithmFromHistory(index) {
 
     updateTrainer(
         "<span>" + algTest.orientRandPart + "</span>" + " " + algTest.scramble,
-        algTest.solutions.join("<br><br>"),
         algTest.preorientation + algTest.scramble,
         timerText
     );
@@ -1026,38 +982,26 @@ function displayAlgorithmForPreviousTest(reTest = true, showSolution = true) {//
     if (showSolution) {
         updateTrainer("<span>" + lastTest.orientRandPart + "</span>" + " " + lastTest.scramble, lastTest.solutions.join("<br><br>"), null, null);
     } else {
-        updateTrainer(null, null, null, null);
+        updateTrainer(null, null, null);
     }
 }
 
-let lastSelectedAlgorithm = null;
-
-let remainingAlgs = []; 
-let isFirstRun = true; 
-
-function getNextAlgFromSession() {
-    
+function getNextAlgFromSession() { 
     if (sessionQueue.length === 0) {
         if (isDrillingMode) {
-            if (!isFirstDrillRun) {
-                const jingle = document.getElementById("completionJingle");
-                jingle.volume = 0.5;
-                jingle.play();
-            }
-            isFirstDrillRun = false;
+            const jingle = document.getElementById("completionJingle");
+            jingle.volume = 0.5;
+            jingle.play();
             
             const boxAlgs = document.getElementById("userDefinedAlgs").value.split("\n").filter(alg => alg.trim() !== "");
             initializeDrillingPairs(boxAlgs);
             sessionQueue = drillingPairs.flat();
             if (sessionQueue.length === 0) return null;
         } else { 
-            if (!isFirstRun) {
-                const jingle = document.getElementById("completionJingle");
-                jingle.volume = 0.5;
-                jingle.play();
-            }
-            isFirstRun = false;
-            
+            const jingle = document.getElementById("completionJingle");
+            jingle.volume = 0.5;
+            jingle.play();
+
             const algList = createAlgList();
             if (algList.length === 0) return null;
             for (let i = algList.length - 1; i > 0; i--) {
@@ -1067,8 +1011,7 @@ function getNextAlgFromSession() {
             sessionQueue = algList;
         }
     }
-
-    
+  
     if (isDrillingMode) {
          const completedPairs = totalDrillPairs - Math.ceil(sessionQueue.length / 2);
          document.getElementById("progressDisplay").innerText = `Progress: ${completedPairs}/${totalDrillPairs}`;
@@ -1078,7 +1021,6 @@ function getNextAlgFromSession() {
         document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex}/${totalAlgs}`;
     }
 
-    
     return sessionQueue.shift();
 }
 
@@ -1096,17 +1038,14 @@ function getMean(timeArray) {
 
 function updateStats() {
     var statistics = document.getElementById("statistics");
-
     statistics.innerHTML = "&nbsp";
 
     if (timeArray.length != 0) {
         statistics.innerHTML += "Mean of " + timeArray.length + ": " + getMean(timeArray).toFixed(2) + "<br>";
     }
-
 }
 
 function startTimer() {
-
     if (timerIsRunning) {
         return;
     }
@@ -1126,7 +1065,6 @@ function stopTimer(logTime = true) {
     }
 
     if (document.getElementById("timer").style.display == 'none') {
-        
         return;
     }
 
@@ -1145,10 +1083,7 @@ function stopTimer(logTime = true) {
         lastTest.solveTime = solveTime;
         timeArray.push(solveTime);
         console.log(timeArray);
-
-        
         incrementReps();
-
         updateTimeList();
     }
 
@@ -1192,16 +1127,9 @@ function findMistakesInUserAlgs(userAlgs) {
 
     for (var i = 0; i < userAlgs.length; i++) {
         let alg = userAlgs[i].trim();
-
-        
         alg = alg.replace(/^[\*\-]+/, "").trim();
-
-        
         alg = alg.replace(/[\u2018\u0060\u2019\u00B4]/g, "'").replace(/"/g, "");
-
         let algWithParenthesis = alg;
-
-        
         alg = alg.replace(/\([^)]*\)/g, "").trim();
 
         if (!isCommutator(alg)) {
@@ -1212,7 +1140,6 @@ function findMistakesInUserAlgs(userAlgs) {
                     newListDisplay.push(algWithParenthesis);
                 }
             } catch (err) {
-                
                 cube.resetCube();
                 cube.doAlgorithm(alg);
                 const edgeBufferPosition = 7; 
@@ -1222,7 +1149,6 @@ function findMistakesInUserAlgs(userAlgs) {
                 cube.resetCube();
 
                 if (cycleMapping) {
-                    //console.log("Alg is not a commutator, but is still a valid 3 cycle:", cycleMapping);
                     newList.push(alg);
                     newListDisplay.push(algWithParenthesis);
                 } else {
@@ -1232,7 +1158,6 @@ function findMistakesInUserAlgs(userAlgs) {
                 }
             }
         } else {
-            
             newList.push(alg);
             newListDisplay.push(algWithParenthesis);
         }
@@ -1266,16 +1191,12 @@ function mirrorAlgsAcrossAxis(algList, axis = "M") {
 }
 
 function averageMovecount(algList, metric, includeAUF) {
-
     var totalmoves = 0;
     var i = 0;
     for (; i < algList.length; i++) {
         var topAlg = algList[i].split("!")[0];
         topAlg = topAlg.replace(/\[|\]|\)|\(/g, "");
-        
         topAlg = commToMoves(topAlg);
-        
-
         var moves = alg.cube.simplify(alg.cube.expand(alg.cube.fromString(topAlg)));
 
         if (!includeAUF) {
@@ -1318,7 +1239,6 @@ function setTimerDisplay(setting) {
 
 function isUsingVirtualCube() {
     var sim = document.getElementById("simcube")
-
     if (sim.style.display == 'none') {
         return false;
     }
@@ -1328,9 +1248,7 @@ function isUsingVirtualCube() {
 }
 
 var listener = new Listener();
-
 var lastKeyMap = null;
-
 var historyIndex;
 
 function nextScramble(displayReady = true) {
@@ -1344,14 +1262,10 @@ function nextScramble(displayReady = true) {
     updateLastCycleInfo();
     hideScramble();
 
-    
-    if (!upcomingAlgTest) {
-        upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
-    }
+    upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
 
-    
+
     const currentAlgTest = upcomingAlgTest;
-
     
     if (!currentAlgTest) {
         document.getElementById("scramble").innerHTML = "Session Complete!";
@@ -1360,25 +1274,20 @@ function nextScramble(displayReady = true) {
         return;
     }
 
-    
     if (shouldReadDrillTTS && currentAlgTest.cycleLetters) {
         speakText(parseLettersForTTS(currentAlgTest.cycleLetters.split("")));
     }
 
-    
-    upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
+   // upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
 
-    
     document.getElementById("cycle").innerHTML = currentAlgTest.cycleLetters;
     const upcomingCycleElement = document.getElementById("upcoming_cycle");
 
     if (upcomingAlgTest) {
         upcomingCycleElement.innerHTML = upcomingAlgTest.cycleLetters;
     } else {
-        
         upcomingCycleElement.innerHTML = "End";
     }
-
     
     testAlg(currentAlgTest);
 
@@ -1473,9 +1382,6 @@ function release(event) {
         }
 
         document.getElementById("timer").style.color = "white"; //Timer should never b any color other than white when space is not pressed down
-        
-
-        
     }
 };
 document.onkeyup = release
@@ -1487,7 +1393,6 @@ try { //only for mobile
 
 var doNothingNextTimeSpaceIsPressed = true;
 function press(event) { //Stops the screen from scrolling down when you press space
-
     if (event.key == " " || event.type == "touchstart") { //space
         if (document.activeElement.type == "text") {
             return;
@@ -1523,9 +1428,6 @@ function press(event) { //Stops the screen from scrolling down when you press sp
                     }
 
                 }
-                
-
-                
 
                 else if (document.getElementById("timer").innerHTML == "Ready") {
                     document.getElementById("timer").style.color = "green";
@@ -1557,10 +1459,6 @@ class SolveTime {
         return this.time;
     }
 }
-
-const nextScrambleButton = document.querySelector('button[name="nextScrambleButton"]');
-if (nextScrambleButton)
-    nextScrambleButton.addEventListener('click', nextScramble);
 
 const showSolutionButton = document.querySelector('button[name="showSolutionButton"]');
 if (showSolutionButton)
@@ -1594,7 +1492,6 @@ function RubiksCube() {
             for (var j = 0; j < 9; ++j) {
                 this.cubestate[9 * i + j][0] = face;
             }
-
             ++face;
         }
     }
@@ -1605,7 +1502,6 @@ function RubiksCube() {
             for (var j = 0; j < 9; ++j) {
                 this.cubestate[9 * i + j][1] = 9 * i + j;
             }
-
             ++face;
         }
     }
@@ -1624,13 +1520,11 @@ function RubiksCube() {
             let uniqueColorsOnFace = new Set();
 
             for (var j = 0; j < 9; j++) {
-                
                 if (initialMask.length == 54 && initialMask[this.cubestate[9 * i + j][1]] == 'x') {
                     continue;
                 }
                 uniqueColorsOnFace.add(this.cubestate[9 * i + j][0]);
             }
-
             if (uniqueColorsOnFace.size > 1) {
                 return false;
             }
@@ -1638,10 +1532,7 @@ function RubiksCube() {
         return true;
     }
     this.wcaOrient = function () {
-        
-        //
         var moves = "";
-
         if (this.cubestate[13][0] == 1) {//R face
             this.doAlgorithm("z'");
             moves += "z'";
@@ -1710,9 +1601,7 @@ function RubiksCube() {
             var match = myRegexp.exec(move.trim());
 
             if (match != null) {
-
                 var side = match[1];
-
                 var times = 1;
                 if (!match[2] == "") {
                     times = match[2] % 4;
@@ -1777,7 +1666,6 @@ function RubiksCube() {
                     case "S":
                         this.doS(times);
                         break;
-
                 }
             }
         }
@@ -1790,17 +1678,14 @@ function RubiksCube() {
             var cubestate = this.cubestate;
             this.cubestate = [cubestate[6], cubestate[3], cubestate[0], cubestate[7], cubestate[4], cubestate[1], cubestate[8], cubestate[5], cubestate[2], cubestate[45], cubestate[46], cubestate[47], cubestate[12], cubestate[13], cubestate[14], cubestate[15], cubestate[16], cubestate[17], cubestate[9], cubestate[10], cubestate[11], cubestate[21], cubestate[22], cubestate[23], cubestate[24], cubestate[25], cubestate[26], cubestate[27], cubestate[28], cubestate[29], cubestate[30], cubestate[31], cubestate[32], cubestate[33], cubestate[34], cubestate[35], cubestate[18], cubestate[19], cubestate[20], cubestate[39], cubestate[40], cubestate[41], cubestate[42], cubestate[43], cubestate[44], cubestate[36], cubestate[37], cubestate[38], cubestate[48], cubestate[49], cubestate[50], cubestate[51], cubestate[52], cubestate[53]];
         }
-
     }
 
     this.doR = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
-
             this.cubestate = [cubestate[0], cubestate[1], cubestate[20], cubestate[3], cubestate[4], cubestate[23], cubestate[6], cubestate[7], cubestate[26], cubestate[15], cubestate[12], cubestate[9], cubestate[16], cubestate[13], cubestate[10], cubestate[17], cubestate[14], cubestate[11], cubestate[18], cubestate[19], cubestate[29], cubestate[21], cubestate[22], cubestate[32], cubestate[24], cubestate[25], cubestate[35], cubestate[27], cubestate[28], cubestate[51], cubestate[30], cubestate[31], cubestate[48], cubestate[33], cubestate[34], cubestate[45], cubestate[36], cubestate[37], cubestate[38], cubestate[39], cubestate[40], cubestate[41], cubestate[42], cubestate[43], cubestate[44], cubestate[8], cubestate[46], cubestate[47], cubestate[5], cubestate[49], cubestate[50], cubestate[2], cubestate[52], cubestate[53]]
         }
-
     }
 
     this.doF = function (times) {
@@ -1809,7 +1694,6 @@ function RubiksCube() {
             var cubestate = this.cubestate;
             this.cubestate = [cubestate[0], cubestate[1], cubestate[2], cubestate[3], cubestate[4], cubestate[5], cubestate[44], cubestate[41], cubestate[38], cubestate[6], cubestate[10], cubestate[11], cubestate[7], cubestate[13], cubestate[14], cubestate[8], cubestate[16], cubestate[17], cubestate[24], cubestate[21], cubestate[18], cubestate[25], cubestate[22], cubestate[19], cubestate[26], cubestate[23], cubestate[20], cubestate[15], cubestate[12], cubestate[9], cubestate[30], cubestate[31], cubestate[32], cubestate[33], cubestate[34], cubestate[35], cubestate[36], cubestate[37], cubestate[27], cubestate[39], cubestate[40], cubestate[28], cubestate[42], cubestate[43], cubestate[29], cubestate[45], cubestate[46], cubestate[47], cubestate[48], cubestate[49], cubestate[50], cubestate[51], cubestate[52], cubestate[53]];
         }
-
     }
 
     this.doD = function (times) {
@@ -1818,7 +1702,6 @@ function RubiksCube() {
             var cubestate = this.cubestate;
             this.cubestate = [cubestate[0], cubestate[1], cubestate[2], cubestate[3], cubestate[4], cubestate[5], cubestate[6], cubestate[7], cubestate[8], cubestate[9], cubestate[10], cubestate[11], cubestate[12], cubestate[13], cubestate[14], cubestate[24], cubestate[25], cubestate[26], cubestate[18], cubestate[19], cubestate[20], cubestate[21], cubestate[22], cubestate[23], cubestate[42], cubestate[43], cubestate[44], cubestate[33], cubestate[30], cubestate[27], cubestate[34], cubestate[31], cubestate[28], cubestate[35], cubestate[32], cubestate[29], cubestate[36], cubestate[37], cubestate[38], cubestate[39], cubestate[40], cubestate[41], cubestate[51], cubestate[52], cubestate[53], cubestate[45], cubestate[46], cubestate[47], cubestate[48], cubestate[49], cubestate[50], cubestate[15], cubestate[16], cubestate[17]];
         }
-
     }
 
     this.doL = function (times) {
@@ -1827,7 +1710,6 @@ function RubiksCube() {
             var cubestate = this.cubestate;
             this.cubestate = [cubestate[53], cubestate[1], cubestate[2], cubestate[50], cubestate[4], cubestate[5], cubestate[47], cubestate[7], cubestate[8], cubestate[9], cubestate[10], cubestate[11], cubestate[12], cubestate[13], cubestate[14], cubestate[15], cubestate[16], cubestate[17], cubestate[0], cubestate[19], cubestate[20], cubestate[3], cubestate[22], cubestate[23], cubestate[6], cubestate[25], cubestate[26], cubestate[18], cubestate[28], cubestate[29], cubestate[21], cubestate[31], cubestate[32], cubestate[24], cubestate[34], cubestate[35], cubestate[42], cubestate[39], cubestate[36], cubestate[43], cubestate[40], cubestate[37], cubestate[44], cubestate[41], cubestate[38], cubestate[45], cubestate[46], cubestate[33], cubestate[48], cubestate[49], cubestate[30], cubestate[51], cubestate[52], cubestate[27]];
         }
-
     }
 
     this.doB = function (times) {
@@ -1836,7 +1718,6 @@ function RubiksCube() {
             var cubestate = this.cubestate;
             this.cubestate = [cubestate[11], cubestate[14], cubestate[17], cubestate[3], cubestate[4], cubestate[5], cubestate[6], cubestate[7], cubestate[8], cubestate[9], cubestate[10], cubestate[35], cubestate[12], cubestate[13], cubestate[34], cubestate[15], cubestate[16], cubestate[33], cubestate[18], cubestate[19], cubestate[20], cubestate[21], cubestate[22], cubestate[23], cubestate[24], cubestate[25], cubestate[26], cubestate[27], cubestate[28], cubestate[29], cubestate[30], cubestate[31], cubestate[32], cubestate[36], cubestate[39], cubestate[42], cubestate[2], cubestate[37], cubestate[38], cubestate[1], cubestate[40], cubestate[41], cubestate[0], cubestate[43], cubestate[44], cubestate[51], cubestate[48], cubestate[45], cubestate[52], cubestate[49], cubestate[46], cubestate[53], cubestate[50], cubestate[47]];
         }
-
     }
 
     this.doE = function (times) {
@@ -1845,7 +1726,6 @@ function RubiksCube() {
             var cubestate = this.cubestate;
             this.cubestate = [cubestate[0], cubestate[1], cubestate[2], cubestate[3], cubestate[4], cubestate[5], cubestate[6], cubestate[7], cubestate[8], cubestate[9], cubestate[10], cubestate[11], cubestate[21], cubestate[22], cubestate[23], cubestate[15], cubestate[16], cubestate[17], cubestate[18], cubestate[19], cubestate[20], cubestate[39], cubestate[40], cubestate[41], cubestate[24], cubestate[25], cubestate[26], cubestate[27], cubestate[28], cubestate[29], cubestate[30], cubestate[31], cubestate[32], cubestate[33], cubestate[34], cubestate[35], cubestate[36], cubestate[37], cubestate[38], cubestate[48], cubestate[49], cubestate[50], cubestate[42], cubestate[43], cubestate[44], cubestate[45], cubestate[46], cubestate[47], cubestate[12], cubestate[13], cubestate[14], cubestate[51], cubestate[52], cubestate[53]];
         }
-
     }
 
     this.doM = function (times) {
@@ -1854,7 +1734,6 @@ function RubiksCube() {
             var cubestate = this.cubestate;
             this.cubestate = [cubestate[0], cubestate[52], cubestate[2], cubestate[3], cubestate[49], cubestate[5], cubestate[6], cubestate[46], cubestate[8], cubestate[9], cubestate[10], cubestate[11], cubestate[12], cubestate[13], cubestate[14], cubestate[15], cubestate[16], cubestate[17], cubestate[18], cubestate[1], cubestate[20], cubestate[21], cubestate[4], cubestate[23], cubestate[24], cubestate[7], cubestate[26], cubestate[27], cubestate[19], cubestate[29], cubestate[30], cubestate[22], cubestate[32], cubestate[33], cubestate[25], cubestate[35], cubestate[36], cubestate[37], cubestate[38], cubestate[39], cubestate[40], cubestate[41], cubestate[42], cubestate[43], cubestate[44], cubestate[45], cubestate[34], cubestate[47], cubestate[48], cubestate[31], cubestate[50], cubestate[51], cubestate[28], cubestate[53]];
         }
-
     }
 
     this.doS = function (times) {
@@ -1863,7 +1742,6 @@ function RubiksCube() {
             var cubestate = this.cubestate;
             this.cubestate = [cubestate[0], cubestate[1], cubestate[2], cubestate[43], cubestate[40], cubestate[37], cubestate[6], cubestate[7], cubestate[8], cubestate[9], cubestate[3], cubestate[11], cubestate[12], cubestate[4], cubestate[14], cubestate[15], cubestate[5], cubestate[17], cubestate[18], cubestate[19], cubestate[20], cubestate[21], cubestate[22], cubestate[23], cubestate[24], cubestate[25], cubestate[26], cubestate[27], cubestate[28], cubestate[29], cubestate[16], cubestate[13], cubestate[10], cubestate[33], cubestate[34], cubestate[35], cubestate[36], cubestate[30], cubestate[38], cubestate[39], cubestate[31], cubestate[41], cubestate[42], cubestate[32], cubestate[44], cubestate[45], cubestate[46], cubestate[47], cubestate[48], cubestate[49], cubestate[50], cubestate[51], cubestate[52], cubestate[53]];
         }
-
     }
 
     this.doX = function (times) {
@@ -1880,7 +1758,6 @@ function RubiksCube() {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
-
             this.doU(1);
             this.doE(3);
             this.doD(3);
@@ -1891,7 +1768,6 @@ function RubiksCube() {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
-
             this.doF(1);
             this.doS(1);
             this.doB(3);
@@ -1904,9 +1780,7 @@ function RubiksCube() {
             var cubestate = this.cubestate;
             this.doE(3);
             this.doU(1);
-
         }
-
     }
 
     this.doRw = function (times) {
@@ -1916,7 +1790,6 @@ function RubiksCube() {
             this.doM(3);
             this.doR(1);
         }
-
     }
 
     this.doFw = function (times) {
@@ -1926,7 +1799,6 @@ function RubiksCube() {
             this.doS(1);
             this.doF(1);
         }
-
     }
 
     this.doDw = function (times) {
@@ -1936,7 +1808,6 @@ function RubiksCube() {
             this.doE(1);
             this.doD(1);
         }
-
     }
 
     this.doLw = function (times) {
@@ -1946,7 +1817,6 @@ function RubiksCube() {
             this.doM(1);
             this.doL(1);
         }
-
     }
 
     this.doBw = function (times) {
@@ -1956,13 +1826,11 @@ function RubiksCube() {
             this.doS(3);
             this.doB(1);
         }
-
     }
 }
 
 RubiksCube.prototype.getThreeCycleMapping = function (edgeBuffer, cornerBuffer) {
     const unsolvedPositions = [];
-
     
     for (let i = 0; i < this.cubestate.length; i++) {
         if (this.cubestate[i][0] !== SOLVED_POSITIONS[i][0] || this.cubestate[i][1] !== SOLVED_POSITIONS[i][1]) {
@@ -1970,7 +1838,6 @@ RubiksCube.prototype.getThreeCycleMapping = function (edgeBuffer, cornerBuffer) 
         }
     }
 
-    
     let bufferPosition;
     if (unsolvedPositions.length === 6) {
         bufferPosition = edgeBuffer; 
@@ -1981,14 +1848,12 @@ RubiksCube.prototype.getThreeCycleMapping = function (edgeBuffer, cornerBuffer) 
         return null;
     }
 
-    
     const cycleMapping = {};
     for (const pos of unsolvedPositions) {
         const targetPosition = this.cubestate[pos][1]; 
         cycleMapping[pos] = targetPosition;
     }
 
-    
     const visited = new Set();
     const cycle = [];
     let current = bufferPosition;
@@ -1999,7 +1864,6 @@ RubiksCube.prototype.getThreeCycleMapping = function (edgeBuffer, cornerBuffer) 
         current = cycleMapping[current];
     }
 
-    
     if (cycle.length !== 3) {
         console.log("Invalid cycle for buffer position:", bufferPosition);
         return null;
@@ -2025,9 +1889,6 @@ function parseLettersForTTS(letters) {
 
 function checkForSpecialSequences() {
     const recentMoves = moveHistory.join("");
-
-    
-
     if (recentMoves.endsWith("D D D D D D D D ") || recentMoves.endsWith("D'D'D'D'D'D'D'D'")) {
         console.log("Special sequence detected: D4");
         triggerSpecialAction("D8");
@@ -2038,25 +1899,21 @@ function checkForSpecialSequences() {
         triggerSpecialAction("B4");
     }
 
-    
     if (recentMoves.endsWith("L L L L ") || recentMoves.endsWith("L'L'L'L'")) {
         console.log("Special sequence detected: L4");
         triggerSpecialAction("L4");
     }
 
-    
     if (recentMoves.endsWith("F F F F ") || recentMoves.endsWith("F'F'F'F'")) {
         console.log("Special sequence detected: F4");
         triggerSpecialAction("F4");
     }
 
-    
     if (recentMoves.endsWith("R R R R ") || recentMoves.endsWith("R'R'R'R'")) {
         console.log("Special sequence detected: R4");
         triggerSpecialAction("R4");
     }
 
-    
     if (recentMoves.endsWith("U U U U U U U U ") || recentMoves.endsWith("U'U'U'U'U'U'U'U'")) {
         console.log("Special sequence detected: U6");
         triggerSpecialAction("U6");
@@ -2064,9 +1921,7 @@ function checkForSpecialSequences() {
 }
 
 function processRegularMode(text) {
-    
     const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
     
     return text
         .split(" ") 
@@ -2088,18 +1943,13 @@ function speakText(text, rate = 1.0, readComm = false, readHype = false) {
     }
 
     if ('speechSynthesis' in window) {
-        
         if (!utterance) {
             utterance = new SpeechSynthesisUtterance();
         }
 
-        
         window.speechSynthesis.cancel();
-
-        
         utterance.rate = rate; 
         utterance.lang = localStorage.getItem("ttsLanguage") || "pl-PL"; 
-
         
         if (!readHype) {
             utterance.text = processTextForTTS(text, readComm);
@@ -2107,7 +1957,6 @@ function speakText(text, rate = 1.0, readComm = false, readHype = false) {
             utterance.text = text; 
         }
 
-        
         window.speechSynthesis.speak(utterance);
     } else {
         console.warn('Text-to-Speech is not supported in this browser.');
@@ -2116,9 +1965,7 @@ function speakText(text, rate = 1.0, readComm = false, readHype = false) {
 
 function processTextForTTS(text, readComm = false) {
     if (readComm) {
-        
         if (currentMode === "corner") {
-            
             const colonIndex = text.indexOf(":");
             if (colonIndex !== -1) {
                 text = text.substring(0, colonIndex).trim(); 
@@ -2127,7 +1974,6 @@ function processTextForTTS(text, readComm = false) {
             }
         }
 
-        
         const replacements = {
             ":": " potem",
             "'": " priim",
@@ -2149,7 +1995,6 @@ function triggerSpecialAction(sequence) {
     switch (sequence) {
         case "D8":
             console.log("D4 detected! Reading out current displayed scramble");
-            
             const displayedScrambleElement = document.getElementById("scramble");
             const displayedScrambleText = displayedScrambleElement ? displayedScrambleElement.textContent : null;
 
@@ -2159,6 +2004,7 @@ function triggerSpecialAction(sequence) {
             } else {
                 console.warn("No displayed scramble available to read out.");
             }
+
             markCurrentCommAsBad();
             break;
         case "B4":
@@ -2197,11 +2043,7 @@ function triggerSpecialAction(sequence) {
 function enableTtsOnStartup() {
     const enableTTSCheckbox = document.getElementById("enableTTS");
     const savedTTSState = localStorage.getItem("enableTTS");
-
-    
     enableTTSCheckbox.checked = savedTTSState === "true";
-
-    
     enableTTSCheckbox.addEventListener("change", function () {
         localStorage.setItem("enableTTS", enableTTSCheckbox.checked);
     });
@@ -2210,13 +2052,11 @@ function enableTtsOnStartup() {
 async function connectSmartCube() {
     try {
         if (conn) {
-            
             await conn.disconnect();
             connectSmartCubeElement.textContent = 'Connect';
             alert(`Smart cube ${conn.deviceName} disconnected`);
             conn = null;
         } else {
-            
             conn = await connect(applyMoves);
             if (!conn) {
                 alert(`Smart cube is not supported`);
@@ -2224,7 +2064,6 @@ async function connectSmartCube() {
                 await conn.initAsync();
                 connectSmartCubeElement.textContent = 'Disconnect';
 
-                
                 const progressText = document.getElementById("progressDisplay").innerText;
                 const [currentProgress, totalProgress] = progressText
                     .replace("Progress: ", "")
@@ -2234,7 +2073,6 @@ async function connectSmartCube() {
                 if (currentProgress === 0) {
                     initializeSession(); 
                 } else {
-                    
                     retryCurrentAlgorithm();
                 }
             }
@@ -2246,7 +2084,6 @@ async function connectSmartCube() {
 }
 
 function retryCurrentAlgorithm() {
-    
     const lastTest = algorithmHistory[algorithmHistory.length - 1];
     stopTimer(false);
 
@@ -2255,22 +2092,17 @@ function retryCurrentAlgorithm() {
         return;
     }
 
-    
     cube.resetCube();
     doAlg(lastTest.scramble, false);
     updateVirtualCube();
 
-    
     document.getElementById("timer").innerHTML = "0.00";
-
-    
     document.getElementById("scramble").innerHTML = `<span>${lastTest.orientRandPart}</span> ${lastTest.rawAlgs[0]}`;
     document.getElementById("cycle").innerHTML = lastTest.cycleLetters;
 
-    
     speakText(parseLettersForTTS(lastTest.cycleLetters.split("")));
-
     console.log("Retrying algorithm:", lastTest.rawAlgs[0]);
+
     startTimer();
 }
 
@@ -2326,7 +2158,6 @@ function markLastCommAsChange() {
         return;
     }
 
-    
     cycleFeedbackMap.set(cycleLetters, 2);
 
     console.log(`Marked "${cycleLetters}" as Change/Drill alg.`);
@@ -2745,26 +2576,17 @@ document.getElementById("letterSelector").addEventListener("click", function () 
 
     const titleContainer = document.createElement("div");
     titleContainer.className = "selector-title-container";
-
     const mainTitle = document.createElement("h2");
     mainTitle.textContent = "Select sets to practice";
     mainTitle.className = "selector-main-title";
-
     const subTitle = document.createElement("p");
     subTitle.textContent = "Inverses are separated for easier control";
     subTitle.className = "selector-sub-title";
-
     const countLabel = document.createElement("div");
     countLabel.id = "set-selector-count";
-    countLabel.style.fontSize = "1.2rem";
-    countLabel.style.fontWeight = "bold";
-    countLabel.style.marginTop = "8px";
-    countLabel.style.color = "#4CAF50"; 
+    countLabel.style.cssText = "font-size: 1.2rem; font-weight: bold; margin-top: 8px; color: #4CAF50;";
     countLabel.textContent = "Calculating..."; 
-
-    titleContainer.appendChild(mainTitle);
-    titleContainer.appendChild(subTitle);
-    titleContainer.appendChild(countLabel);
+    titleContainer.append(mainTitle, subTitle, countLabel);
     selectionGrid.appendChild(titleContainer);
 
     const actionsDiv = document.createElement("div");
@@ -2787,7 +2609,6 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         });
         
         fetchedAlgs.forEach(alg => stickerState[alg.key] = newState);
-        
         saveSelectedSets();
         saveStickerState();
         updateActiveAlgCount(); 
@@ -2809,40 +2630,18 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         selectionGrid.style.display = "none";
         initializeSession(); 
     });
-
-    actionsDiv.appendChild(toggleBtn);
-    actionsDiv.appendChild(saveCloseBtn);
-    actionsDiv.appendChild(saveStartBtn);
+    actionsDiv.append(toggleBtn, saveCloseBtn, saveStartBtn);
     selectionGrid.appendChild(actionsDiv);
 
     const labelsDiv = document.createElement("div");
     labelsDiv.className = "set-labels-container";
-    const leftLabel = document.createElement("div");
-    leftLabel.className = "set-label";
-    leftLabel.textContent = "First target";
-    const spacer = document.createElement("div");
-    spacer.className = "set-label-spacer";
-    const rightLabel = document.createElement("div");
-    rightLabel.className = "set-label";
-    rightLabel.textContent = "Second target";
-    labelsDiv.appendChild(leftLabel);
-    labelsDiv.appendChild(spacer);
-    labelsDiv.appendChild(rightLabel);
+    labelsDiv.innerHTML = `<div class="set-label">First target</div><div class="set-label-spacer"></div><div class="set-label">Second target</div>`;
     selectionGrid.appendChild(labelsDiv);
 
-    const faces = [
-        { name: "U", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
-        { name: "L", indices: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
-        { name: "F", indices: [18, 19, 20, 21, 22, 23, 24, 25, 26] },
-        { name: "R", indices: [9, 10, 11, 12, 13, 14, 15, 16, 17] },
-        { name: "B", indices: [45, 46, 47, 48, 49, 50, 51, 52, 53] },
-        { name: "D", indices: [27, 28, 29, 30, 31, 32, 33, 34, 35] }
-    ];
-
-    const BUFFER_INDICES = currentMode === "edge" ? [7, 19] : [8, 9, 20];
+    const { indices: bufferIndices } = getBufferInfo(currentMode); 
     const validIndices = new Set(currentMode === "corner" ? CORNER_FACELET_INDICES : EDGE_FACELET_INDICES);
 
-    faces.forEach(face => {
+    FACE_DEFINITIONS.forEach(face => {
         const rowDiv = document.createElement("div");
         rowDiv.className = "face-row";
         const leftGroup = document.createElement("div");
@@ -2860,16 +2659,14 @@ document.getElementById("letterSelector").addEventListener("click", function () 
                 if (letter && letter.trim() !== "" && letter !== "-" && !faceLetters.has(letter)) {
                     faceLetters.add(letter);
 
-                    // Function to create button
                     const createBtn = (pos) => {
                         const btn = document.createElement("button");
-                        // Use lowercase face name to match CSS
                         btn.className = `set-btn face-${face.name.toLowerCase()}`;
                         btn.textContent = pos === 'first' ? `${letter}_` : `_${letter}`;
                         btn.dataset.letter = letter;
                         btn.dataset.position = pos;
 
-                        const isBuffer = BUFFER_INDICES.includes(index);
+                        const isBuffer = bufferIndices.includes(index);
 
                         if (isBuffer) {
                             btn.classList.add("buffer");
@@ -2898,23 +2695,19 @@ document.getElementById("letterSelector").addEventListener("click", function () 
                         return btn;
                     };
 
-                    // Collect buttons for this letter
                     rowLeftBtns.push(createBtn('first'));
                     rowRightBtns.push(createBtn('second'));
                 }
             }
         });
 
-        // SWAP LOGIC: Swap the last two buttons in the row (e.g., A B C D -> A B D C)
+        // Swap last two if needed
         if (rowLeftBtns.length >= 2) {
             const len = rowLeftBtns.length;
-            // Swap left group
             [rowLeftBtns[len - 1], rowLeftBtns[len - 2]] = [rowLeftBtns[len - 2], rowLeftBtns[len - 1]];
-            // Swap right group
             [rowRightBtns[len - 1], rowRightBtns[len - 2]] = [rowRightBtns[len - 2], rowRightBtns[len - 1]];
         }
 
-        // Append buttons to groups
         rowLeftBtns.forEach(btn => leftGroup.appendChild(btn));
         rowRightBtns.forEach(btn => rightGroup.appendChild(btn));
 
@@ -2960,10 +2753,8 @@ function filterAlgorithmsVerbose(selectedSetNames, fetchedAlgs, stickerState, se
 
         return isStickerSelected && isSetActive; 
     });
-
     
     const uniqueAlgs = [...new Set(filteredAlgs.map(pair => pair.value.trim()))];
-
     console.log("Filtered and unique algorithms:", uniqueAlgs);
 
     return uniqueAlgs;
@@ -2972,6 +2763,29 @@ function filterAlgorithmsVerbose(selectedSetNames, fetchedAlgs, stickerState, se
 document.addEventListener("DOMContentLoaded", function () {
     loadStickerState(); 
     loadSelectedSets(); 
+});
+
+document.getElementById("connectSmartCubeReplica").addEventListener("click", function () {
+    document.getElementById("connectSmartCube").click(); 
+});
+
+const stickerState = {}; 
+
+document.querySelectorAll(".gridButton").forEach(button => {
+    const setName = button.dataset.letter; 
+
+    button.addEventListener("contextmenu", function (event) {
+        event.preventDefault(); 
+        showPairSelectionGrid(setName);
+    });
+
+    button.addEventListener("touchstart", function (event) {
+        
+        let timeout = setTimeout(() => {
+            showPairSelectionGrid(setName);
+        }, 500); 
+        button.addEventListener("touchend", () => clearTimeout(timeout), { once: true });
+    });
 });
 
 const ALL_LETTERS = "AOIEFGHJKLNBPQTSRCDWZ".split(""); 
@@ -3002,156 +2816,153 @@ const EXCLUDED_DUOS_EDGES = [
     ["U", "Y"], 
 ];
 
-function isExcludedCombination(combination) {
-    const currentExclusions = determineCycleType() === "corner" ? EXCLUDED_TRIOS_CORNERS : EXCLUDED_DUOS_EDGES;
-
-    for (const group of currentExclusions) {
-        const [letter1, letter2] = combination.split("");
-        if (group.includes(letter1) && group.includes(letter2)) {
-            return true; 
-        }
-    }
-    return false; 
-}
-
-document.getElementById("connectSmartCubeReplica").addEventListener("click", function () {
-    document.getElementById("connectSmartCube").click(); 
-});
-
-const stickerState = {}; 
-
-document.querySelectorAll(".gridButton").forEach(button => {
-    const setName = button.dataset.letter; 
-
-    button.addEventListener("contextmenu", function (event) {
-        event.preventDefault(); 
-        showPairSelectionGrid(setName);
-    });
-
-    button.addEventListener("touchstart", function (event) {
-        
-        let timeout = setTimeout(() => {
-            showPairSelectionGrid(setName);
-        }, 500); 
-        button.addEventListener("touchend", () => clearTimeout(timeout), { once: true });
-    });
-});
-
 function showPairSelectionGrid(setName) {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
     const leftPairGrid = document.getElementById("leftPairGrid");
     const rightPairGrid = document.getElementById("rightPairGrid");
     const pairSelectionTitle = document.getElementById("pairSelectionTitle");
-    
+
     pairSelectionTitle.textContent = `Select Pairs for Letter ${setName}`;
-    
+
+    let instructionLabel = document.getElementById("pairSelectionInstructions");
+    if (!instructionLabel) {
+        instructionLabel = document.createElement("div");
+        instructionLabel.id = "pairSelectionInstructions";
+        instructionLabel.style.textAlign = "center";
+        instructionLabel.style.fontSize = "0.9rem";
+        instructionLabel.style.marginBottom = "10px";
+        instructionLabel.style.opacity = "0.8";
+        pairSelectionTitle.parentNode.insertBefore(instructionLabel, pairSelectionTitle.nextSibling);
+    }
+    instructionLabel.textContent = "Right-click to toggle pair & inverse";
+
     leftPairGrid.innerHTML = "";
     rightPairGrid.innerHTML = "";
-    
-    const activeLetters = getActiveSchemeLetters(); 
 
-    const pairs = activeLetters.map(letter => `${setName}${letter}`)
-        .concat(activeLetters.map(letter => `${letter}${setName}`)) 
-        .filter(pair => pair[0] !== pair[1]) 
-        .filter(pair => !isExcludedCombination(pair)) 
-        .sort(customComparator); 
-
+    const mode = currentMode;
+    const { groupId: bufferGroupId } = getBufferInfo(mode); 
     
+    const letterToFaceMap = getLetterToFaceMap(); 
+
+    const letterToMap = mode === "edge" ? cachedEdgeLetterToIndex : cachedCornerLetterToIndex;
+    const activeLetters = getActiveSchemeLetters();
+
+    const pairs = activeLetters
+        .flatMap(letter => [`${setName}${letter}`, `${letter}${setName}`])
+        .filter((pair, index, self) => self.indexOf(pair) === index)
+        .filter(pair => {
+            const l1 = pair[0];
+            const l2 = pair[1];
+            if (l1 === l2) return false;
+
+            const idx1 = letterToMap[l1];
+            const idx2 = letterToMap[l2];
+            if (idx1 === undefined || idx2 === undefined) return false;
+
+            const g1 = getPieceGroupId(idx1, mode);
+            const g2 = getPieceGroupId(idx2, mode);
+
+            if (g1 === g2) return false;
+            if (g1 === bufferGroupId || g2 === bufferGroupId) return false;
+
+            return true;
+        })
+        .sort(customComparator);
+
     pairs.forEach(pair => {
-        if (!(pair in stickerState)) {
-            stickerState[pair] = true; 
+        if (!(pair in stickerState)) stickerState[pair] = true;
+    });
+
+    // Group Pairs by Face using the robust letterToFaceMap
+    const faceGroups = { U: [], L: [], F: [], R: [], B: [], D: [] };
+
+    pairs.forEach(pair => {
+        const targetLetter = pair.startsWith(setName) ? pair[1] : pair[0];
+        // Look up face by letter directly
+        const faceName = letterToFaceMap[targetLetter];
+
+        if (faceName && faceGroups[faceName]) {
+            faceGroups[faceName].push(pair);
+        } else {
+            // Fallback for letters not on a specific face (shouldn't happen with valid scheme)
+            console.warn(`Could not find face for letter ${targetLetter}`);
         }
     });
 
-    
-    const colorGroups = {};
-    pairs.forEach(pair => {
-        
-        const colorLetter = pair[0] === setName ? pair[1] : pair[0];
-        
-        const { background } = LETTER_COLORS[colorLetter] || { background: "grey" }; 
-        
-        if (!colorGroups[background]) {
-            colorGroups[background] = [];
-        }
-        colorGroups[background].push(pair);
-    });
+    FACE_DEFINITIONS.forEach(faceDef => {
+        const faceName = faceDef.name;
+        const groupPairs = faceGroups[faceName];
 
-    
-    Object.keys(colorGroups).forEach(colorName => {
+        if (!groupPairs || groupPairs.length === 0) return;
+
         const leftRow = document.createElement("div");
         const rightRow = document.createElement("div");
         leftRow.className = "grid-row";
         rightRow.className = "grid-row";
 
-        colorGroups[colorName].forEach(pair => {
+        groupPairs.forEach(pair => {
             const button = document.createElement("button");
+            button.classList.add("pairButton");
             
-            button.classList.add("pairButton"); 
+            // Apply the face color class
+            button.classList.add(`face-${faceName.toLowerCase()}`);
             
-            const safeColorName = colorName.toLowerCase().replace(/\s+/g, '-');
-            button.classList.add(`sticker-${safeColorName}`); 
-
             button.textContent = pair;
-            button.dataset.pair = pair; 
+            button.dataset.pair = pair;
 
-            
-            if (!stickerState[pair]) {
-                button.classList.add("untoggled");
-            }
+            if (!stickerState[pair]) button.classList.add("untoggled");
 
-            
             const isLeftSide = pair.startsWith(setName);
 
-            
             button.addEventListener("click", () => {
                 const newState = !stickerState[pair];
+                stickerState[pair] = newState;
+                button.classList.toggle("untoggled", !newState);
+                saveStickerState();
+            });
 
-                
+            button.addEventListener("contextmenu", (e) => {
+                e.preventDefault();
+                const newState = !stickerState[pair];
                 stickerState[pair] = newState;
                 button.classList.toggle("untoggled", !newState);
 
-                
                 if (isLeftSide) {
                     const reversePair = `${pair[1]}${pair[0]}`;
-                    stickerState[reversePair] = newState; 
-
-                    
+                    stickerState[reversePair] = newState;
                     const reverseButton = document.querySelector(`.pairButton[data-pair="${reversePair}"]`);
-                    if (reverseButton) {
-                        if (newState) {
-                            reverseButton.classList.remove("untoggled");
-                        } else {
-                            reverseButton.classList.add("untoggled");
-                        }
-                    }
+                    if (reverseButton) reverseButton.classList.toggle("untoggled", !newState);
                 }
-                
-                saveStickerState(); 
+                saveStickerState();
             });
 
-            
-            if (isLeftSide) {
-                leftRow.appendChild(button);
-            } else {
-                rightRow.appendChild(button);
-            }
+            if (isLeftSide) leftRow.appendChild(button);
+            else rightRow.appendChild(button);
         });
 
-        
-        if (leftRow.children.length > 0) {
-            leftPairGrid.appendChild(leftRow);
-        }
-        if (rightRow.children.length > 0) {
-            rightPairGrid.appendChild(rightRow);
-        }
+        if (leftRow.children.length > 0) leftPairGrid.appendChild(leftRow);
+        if (rightRow.children.length > 0) rightPairGrid.appendChild(rightRow);
     });
 
-    
     pairSelectionGrid.style.display = "block";
+
+    const handleOutsideClick = function(event) {
+        const grid = document.getElementById("pairSelectionGrid");
+        if (grid.style.display === "none") {
+            document.removeEventListener("click", handleOutsideClick);
+            return;
+        }
+        if (!grid.contains(event.target)) {
+            grid.style.display = "none";
+            document.removeEventListener("click", handleOutsideClick);
+        }
+    };
+    setTimeout(() => { document.addEventListener("click", handleOutsideClick); }, 0);
 }
 
-document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
+document.getElementById("applyPairSelectionButton").addEventListener("click", function (event) {
+    event.stopPropagation(); 
+
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
     pairSelectionGrid.style.display = "none";
 
@@ -3159,6 +2970,48 @@ document.getElementById("applyPairSelectionButton").addEventListener("click", fu
     updateActiveAlgCount();
     updateUserDefinedAlgs();
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const selectionGrid = document.getElementById("selectionGrid");
+
+    const existingResetButton = selectionGrid.querySelector(".reset-button");
+    if (!existingResetButton) {
+        const resetButton = document.createElement("button");
+        resetButton.textContent = "Reset All Sets and Stickers";
+        resetButton.className = "reset-button"; 
+        resetButton.addEventListener("click", () => {
+            Object.keys(selectedSets).forEach(setName => {
+                selectedSets[setName] = true; 
+            });
+
+            const allStickerKeys = Object.keys(stickerState); 
+            updateStickerState(allStickerKeys); 
+
+            document.querySelectorAll(".gridButton").forEach(button => {
+                const setName = button.dataset.letter;
+                button.classList.remove("untoggled"); 
+            });
+            saveSelectedSets();
+            console.log("All sets and stickers reset to toggled state.");
+        });
+        selectionGrid.appendChild(resetButton);
+    }
+});
+
+function updateStickerState(keysWithValues) {
+    console.log("Updating sticker state...");
+    Object.keys(stickerState).forEach(key => {
+        stickerState[key] = false;
+    });
+    
+    keysWithValues.forEach(key => {
+        stickerState[key] = true;
+    });
+
+    console.log("Updated sticker state:", stickerState);
+
+    saveStickerState();
+}
 
 function saveSelectedSets() {
     localStorage.setItem(getStorageKey("selectedSets"), JSON.stringify(selectedSets));
@@ -3169,9 +3022,6 @@ function loadSelectedSets() {
     const savedSets = localStorage.getItem(getStorageKey("selectedSets"));
     if (savedSets) {
         Object.assign(selectedSets, JSON.parse(savedSets));
-    
-
-        
         document.querySelectorAll(".gridButton").forEach(button => {
             const setName = button.dataset.letter;
             button.classList.toggle("untoggled", !selectedSets[setName]);
@@ -3209,21 +3059,16 @@ function bindApplyButton() {
     if (applyButton) {
         applyButton.addEventListener("click", function () {
             
-            const pairSelectionGrid = document.getElementById("pairSelectionGrid");
-
-            
+            const pairSelectionGrid = document.getElementById("pairSelectionGrid"); 
             if (pairSelectionGrid && pairSelectionGrid.style.display !== "none") {
                 pairSelectionGrid.style.display = "none"; 
                 saveStickerState(); 
                 console.log("Pair selection grid closed and state saved.");
             }
 
-            
             console.log("Applying set/sticker selections to textbox...");
             updateUserDefinedAlgs(); 
-     
 
-            
             const selectionGrid = document.getElementById("selectionGrid");
             if (selectionGrid) {
                 selectionGrid.style.display = "none";
@@ -3257,7 +3102,6 @@ function getPieceNotation(cycleLetters) {
         }
 
         const standardLetter = DEFAULT_POSITION_TO_LETTER_MAP[index];
-
         return notationMap[standardLetter];
     });
 
@@ -3284,61 +3128,6 @@ document.getElementById("cycle").addEventListener("click", function () {
         console.error("Failed to copy piece notation to clipboard:", err);
     });
 });
-
-document.addEventListener("DOMContentLoaded", function () {
-    const selectionGrid = document.getElementById("selectionGrid");
-
-    const existingResetButton = selectionGrid.querySelector(".reset-button");
-    if (!existingResetButton) {
-        const resetButton = document.createElement("button");
-        resetButton.textContent = "Reset All Sets and Stickers";
-        resetButton.className = "reset-button"; 
-        resetButton.addEventListener("click", () => {
-            
-            Object.keys(selectedSets).forEach(setName => {
-                selectedSets[setName] = true; 
-            });
-
-            
-            const allStickerKeys = Object.keys(stickerState); 
-            updateStickerState(allStickerKeys); 
-
-            
-            document.querySelectorAll(".gridButton").forEach(button => {
-                const setName = button.dataset.letter;
-                button.classList.remove("untoggled"); 
-            });
-
-            
-            saveSelectedSets();
-
-            
-       
-
-            console.log("All sets and stickers reset to toggled state.");
-        });
-        selectionGrid.appendChild(resetButton);
-    }
-});
-
-function updateStickerState(keysWithValues) {
-    console.log("Updating sticker state...");
-
-    
-    Object.keys(stickerState).forEach(key => {
-        stickerState[key] = false;
-    });
-
-    
-    keysWithValues.forEach(key => {
-        stickerState[key] = true;
-    });
-
-    console.log("Updated sticker state:", stickerState);
-
-    
-    saveStickerState();
-}
 
 const drillingModeToggle = document.getElementById("drillingModeToggle");
 const drillingModeLabel = document.getElementById("drillingModeLabel");
@@ -3370,12 +3159,10 @@ async function fetchAndApplyPartialFilter() {
             alert("No algorithms found in the partial sheet.");
             return;
         }
-
         
         const commutators = partialList
             .map(pair => pair.value.trim())
             .filter(comm => comm !== "");
-
         
         document.getElementById("userDefinedAlgs").value = commutators.join("\n");
 
@@ -3411,16 +3198,11 @@ async function fetchAlgorithms(proxyUrl) {
 
 document.getElementById("applyPartialFilterButton").addEventListener("click", fetchAndApplyPartialFilter);
 
-/**
- * Provides visual feedback for a successful solve by flashing
- * the background green and changing the timer color temporarily.
- */
 function showSuccessFeedback() {
     if (!isVisualFeedbackEnabled) {
         return;
     }
     const body = document.body;
-    const timerElement = document.getElementById("timer");
 
     body.classList.add("solve-success-flash");
     setTimeout(() => {
@@ -3438,18 +3220,11 @@ visualFeedbackCheckbox.checked = isVisualFeedbackEnabled;
 localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled); 
 
 visualFeedbackCheckbox.addEventListener("change", function () {
-    
     isVisualFeedbackEnabled = this.checked;
-    
     localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled);
-
     console.log(`Visual feedback flash switched to: ${isVisualFeedbackEnabled ? "enabled" : "disabled"}`);
 });
 
-/**
- * Reads inputs from the visual grid and updates the global map.
- * Returns the object map to be saved as JSON.
- */
 function applySchemeFromGrid() {
     const inputs = document.querySelectorAll('.sticker-input');
     const newMap = {};
@@ -3614,7 +3389,6 @@ function handleGridButtonClick(button, letter, position, index) {
                 stickerState[key] = newState;
             }
         });
-
         saveStickerState();
     }
     updateActiveAlgCount();
@@ -3624,14 +3398,12 @@ function updateLetterSchemeCache() {
     cachedEdgeLetterToIndex = {};
     cachedCornerLetterToIndex = {};
 
-    // Valid indices defined in your original code
     const validCornerIndices = new Set(CORNER_FACELET_INDICES);
     const validEdgeIndices = new Set(EDGE_FACELET_INDICES);
 
     for (let i = 0; i < 54; i++) {
         const letter = POSITION_TO_LETTER_MAP[i];
         
-        // Ensure we have a valid letter
         if (letter && typeof letter === 'string' && letter !== "-" && letter.trim() !== "") {
             const cleanLetter = letter.trim();
 
@@ -3644,3 +3416,22 @@ function updateLetterSchemeCache() {
     }
     console.log("Letter scheme cache updated.");
 }
+
+document.addEventListener("click", function(event) {
+    const selectionGrid = document.getElementById("selectionGrid");
+    const letterSelector = document.getElementById("letterSelector");
+    const pairSelectionGrid = document.getElementById("pairSelectionGrid");
+
+    if (selectionGrid && selectionGrid.style.display === "block") {
+        if (!selectionGrid.contains(event.target) && 
+            !letterSelector.contains(event.target) &&
+            (!pairSelectionGrid || !pairSelectionGrid.contains(event.target))) {
+            console.log("Clicked outside set selector. Saving and closing...");
+            updateUserDefinedAlgs();
+            selectionGrid.style.display = "none";
+            
+            if (pairSelectionGrid) pairSelectionGrid.style.display = "none";
+        }
+    }
+});
+

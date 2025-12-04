@@ -1,4 +1,4 @@
-const APP_VERSION = "v1.0.2 - clipboard copies adjusted to match custom lettering schemes"; 
+const APP_VERSION = "v1.0.3 - pair selector rework"; 
 
 const regularDrillOptions = [
     "klik", "bip",
@@ -30,6 +30,7 @@ const SOLVED_POSITIONS = [
     [5, 36], [5, 37], [5, 38], [5, 39], [5, 40], [5, 41], [5, 42], [5, 43], [5, 44], // L 
     [6, 45], [6, 46], [6, 47], [6, 48], [6, 49], [6, 50], [6, 51], [6, 52], [6, 53]  // B 
 ];
+
 const POSITION_TO_LETTER_MAP = {
     0: 'A', 1: 'A', 2: 'O', 3: 'I', 4: 'UC', 5: 'O', 6: 'I', 7: 'Y', 8: 'Y',
     9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
@@ -67,6 +68,8 @@ const HANUS_LETTER_MAP = {
 };
 
 const CENTER_INDICES = [4, 13, 22, 31, 40, 49];
+const CORNER_FACELET_INDICES = [0, 2, 6, 8, 9, 11, 15, 17, 18, 20, 24, 26, 27, 29, 33, 35, 36, 38, 42, 44, 45, 47, 51, 53];
+const EDGE_FACELET_INDICES = [1, 3, 5, 7, 10, 12, 14, 16, 19, 21, 23, 25, 28, 30, 32, 34, 37, 39, 41, 43, 46, 48, 50, 52];
 
 // Maps for edge and corner piece notation
 const EDGE_PIECE_MAP = {
@@ -117,6 +120,44 @@ const CORNER_PIECE_MAP = {
     "W": "DBR",
     "Z": "DBL",
 };
+
+// Physical definitions of the cube pieces based on facelet indices (0-53)
+// used to determine which cases are impossible in the pair selector
+const PIECE_GEOMETRY = {
+    corners: [
+        [0, 36, 47],  // UBL (U0, L0, B2)
+        [2, 45, 11],  // UBR (U2, B0, R2)
+        [8, 20, 9],   // UFR (U8, F2, R0) - Standard Corner Buffer
+        [6, 18, 38],  // UFL (U6, F0, L2)
+        [27, 24, 44], // DFL (D0, F6, L8)
+        [29, 26, 15], // DFR (D2, F8, R6)
+        [35, 51, 17], // DBR (D8, B6, R8)
+        [33, 53, 42]  // DBL (D6, B8, L6)
+    ],
+    edges: [
+        [1, 46],      // UB (U1, B1)
+        [3, 37],      // UL (U3, L1)
+        [5, 10],      // UR (U5, R1)
+        [7, 19],      // UF (U7, F1) - Standard Edge Buffer
+        [23, 12],     // FR (F5, R3)
+        [21, 41],     // FL (F3, L5)
+        [28, 25],     // DF (D1, F7)
+        [32, 14],     // DR (D5, R5)
+        [30, 43],     // DL (D3, L7)
+        [34, 52],     // DB (D7, B7)
+        [48, 16],     // BR (B3, R7)
+        [50, 39]      // BL (B5, L3)
+    ]
+};
+
+const FACE_DEFINITIONS = [
+    { name: "U", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
+    { name: "L", indices: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
+    { name: "F", indices: [18, 19, 20, 21, 22, 23, 24, 25, 26] },
+    { name: "R", indices: [9, 10, 11, 12, 13, 14, 15, 16, 17] },
+    { name: "B", indices: [45, 46, 47, 48, 49, 50, 51, 52, 53] },
+    { name: "D", indices: [27, 28, 29, 30, 31, 32, 33, 34, 35] }
+];
 
 const LETTER_COLORS = {
     "A": { background: "#EFEFEF", text: "black" }, // White
@@ -654,13 +695,6 @@ const LETTER_PAIR_TO_WORD = {
     'ZW': 'zet wu',
     'ZZ': 'zet zet'
 }
-
-var keypadLayout = [
-    ["b", "S'", "E", "f'", "x", "f", "E'", "S", "b"],
-    ["z'", "l'", "L'", "U'", "M'", "U", "R", "r", "z"],
-    ["y'", "l", "L", "F'", "M", "F", "R'", "r'", "y"],
-    ["d", "B", "u'", "D", "x'", "D'", "u", "B'", "d'"]
-]
 
 var defaults = {
     "useVirtual": true,
