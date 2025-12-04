@@ -119,33 +119,33 @@ const CORNER_PIECE_MAP = {
 };
 
 // Physical definitions of the cube pieces based on facelet indices (0-53)
+// used to determine which cases are impossible in the pair selector
 const PIECE_GEOMETRY = {
     corners: [
         [0, 36, 47],  // UBL (U0, L0, B2)
         [2, 45, 11],  // UBR (U2, B0, R2)
-        [8, 18, 9],   // UFR (U8, F0, R0) - Standard Corner Buffer
-        [6, 20, 38],  // UFL (U6, F2, L2)
-        [29, 26, 42], // DFL (D2, F8, L8)
-        [27, 24, 15], // DFR (D0, F6, R6)
+        [8, 20, 9],   // UFR (U8, F2, R0) - Standard Corner Buffer
+        [6, 18, 38],  // UFL (U6, F0, L2) - Corrected
+        [27, 24, 44], // DFL (D0, F6, L8)
+        [29, 26, 15], // DFR (D2, F8, R6)
         [35, 51, 17], // DBR (D8, B6, R8)
-        [33, 53, 44]  // DBL (D6, B8, L6)
+        [33, 53, 42]  // DBL (D6, B8, L6)
     ],
     edges: [
         [1, 46],      // UB (U1, B1)
         [3, 37],      // UL (U3, L1)
         [5, 10],      // UR (U5, R1)
         [7, 19],      // UF (U7, F1) - Standard Edge Buffer
-        [21, 12],     // FR (F3, R3)
-        [23, 41],     // FL (F5, L5)
-        [25, 28],     // DF (F7, D1)
-        [30, 14],     // DR (D3, R5)
-        [32, 43],     // DL (D5, L7)
+        [23, 12],     // FR (F5, R3)
+        [21, 41],     // FL (F3, L5)
+        [28, 25],     // DF (D1, F7)
+        [32, 14],     // DR (D5, R5)
+        [30, 43],     // DL (D3, L7)
         [34, 52],     // DB (D7, B7)
         [48, 16],     // BR (B3, R7)
         [50, 39]      // BL (B5, L3)
     ]
 };
-
 const LETTER_COLORS = {
     "A": { background: "#EFEFEF", text: "black" }, // White
     "O": { background: "#EFEFEF", text: "black" }, // White

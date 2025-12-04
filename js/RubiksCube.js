@@ -3040,7 +3040,9 @@ function showPairSelectionGrid(setName) {
     pairSelectionGrid.style.display = "block";
 }
 
-document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
+document.getElementById("applyPairSelectionButton").addEventListener("click", function (event) {
+    event.stopPropagation(); 
+
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
     pairSelectionGrid.style.display = "none";
 
@@ -3514,12 +3516,17 @@ function updateLetterSchemeCache() {
 document.addEventListener("click", function(event) {
     const selectionGrid = document.getElementById("selectionGrid");
     const letterSelector = document.getElementById("letterSelector");
+    const pairSelectionGrid = document.getElementById("pairSelectionGrid");
 
     if (selectionGrid && selectionGrid.style.display === "block") {
-        if (!selectionGrid.contains(event.target) && !letterSelector.contains(event.target)) {
+        if (!selectionGrid.contains(event.target) && 
+            !letterSelector.contains(event.target) &&
+            (!pairSelectionGrid || !pairSelectionGrid.contains(event.target))) {
             console.log("Clicked outside set selector. Saving and closing...");
             updateUserDefinedAlgs();
             selectionGrid.style.display = "none";
+            
+            if (pairSelectionGrid) pairSelectionGrid.style.display = "none";
         }
     }
 });
