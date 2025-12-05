@@ -6,6 +6,9 @@ let previousCycle = "";
 let sessionQueue = [];
 let upcomingAlgTest = null;
 
+let currentAlgNumber = 1; 
+let totalSessionAlgs = 0;
+
 function getIndexToFaceMap() {
     const map = {};
     FACE_DEFINITIONS.forEach(face => {
@@ -135,6 +138,7 @@ function initializeDrillingPairs(algsFromTextarea) {
 function initializeSession() {
     sessionQueue = [];
     upcomingAlgTest = null;
+    currentAlgNumber = 1;
 
     if (isDrillingMode) {
         const boxAlgs = document.getElementById("userDefinedAlgs").value;
@@ -147,19 +151,25 @@ function initializeSession() {
 
         initializeDrillingPairs(cleanedAlgs);
         sessionQueue = drillingPairs.flat();
+        isFirstDrillRun = true;
+        totalSessionAlgs = drillingPairs.length;
     } else {
         const algList = createAlgList();
+        totalSessionAlgs = algList.length;
         for (let i = algList.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [algList[i], algList[j]] = [algList[j], algList[i]];
         }
         sessionQueue = algList;
+        isFirstRun = true;
     }
 
     repetitionCounter = 0;
     localStorage.setItem("repetitionCounter", repetitionCounter);
     document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
-    document.getElementById("progressDisplay").innerText = "Progress: 0/0";
+    
+    const totalDisplay = isDrillingMode ? totalSessionAlgs : totalSessionAlgs;
+    document.getElementById("progressDisplay").innerText = `Progress: 0/${totalDisplay}`;
 
     nextScramble();
     console.log("Session initialized. Starting a new practice session.");
@@ -986,39 +996,20 @@ function displayAlgorithmForPreviousTest(reTest = true, showSolution = true) {//
     }
 }
 
-function getNextAlgFromSession() { 
+function getNextAlgFromSession() {
     if (sessionQueue.length === 0) {
         if (isDrillingMode) {
-            const jingle = document.getElementById("completionJingle");
-            jingle.volume = 0.5;
-            jingle.play();
-            
             const boxAlgs = document.getElementById("userDefinedAlgs").value.split("\n").filter(alg => alg.trim() !== "");
             initializeDrillingPairs(boxAlgs);
             sessionQueue = drillingPairs.flat();
-            if (sessionQueue.length === 0) return null;
-        } else { 
-            const jingle = document.getElementById("completionJingle");
-            jingle.volume = 0.5;
-            jingle.play();
-
+        } else {
             const algList = createAlgList();
-            if (algList.length === 0) return null;
             for (let i = algList.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [algList[i], algList[j]] = [algList[j], algList[i]];
             }
             sessionQueue = algList;
         }
-    }
-  
-    if (isDrillingMode) {
-         const completedPairs = totalDrillPairs - Math.ceil(sessionQueue.length / 2);
-         document.getElementById("progressDisplay").innerText = `Progress: ${completedPairs}/${totalDrillPairs}`;
-    } else {
-        const totalAlgs = createAlgList().length;
-        const currentIndex = totalAlgs - sessionQueue.length;
-        document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex}/${totalAlgs}`;
     }
 
     return sessionQueue.shift();
@@ -1262,33 +1253,55 @@ function nextScramble(displayReady = true) {
     updateLastCycleInfo();
     hideScramble();
 
-    upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
+    let currentAlgTest = upcomingAlgTest;
 
+    if (!currentAlgTest) {
+        currentAlgTest = generateAlgTest(getNextAlgFromSession());
+    }
 
-    const currentAlgTest = upcomingAlgTest;
-    
     if (!currentAlgTest) {
         document.getElementById("scramble").innerHTML = "Session Complete!";
-        document.getElementById("cycle").innerHTML = "";
-        document.getElementById("upcoming_cycle").innerHTML = "";
         return;
     }
+
+    let maxCount = isDrillingMode ? (totalSessionAlgs * 2) : totalSessionAlgs;
+
+    if (currentAlgNumber > maxCount) {
+        const jingle = document.getElementById("completionJingle");
+        if (jingle) {
+            jingle.volume = 0.5;
+            jingle.play();
+        }
+        currentAlgNumber = 1;
+        
+        isFirstDrillRun = false; 
+        isFirstRun = false;
+    }
+
+    if (isDrillingMode) {
+        let completedPairs = Math.floor((currentAlgNumber - 1) / 2);
+        document.getElementById("progressDisplay").innerText = `Progress: ${completedPairs}/${totalSessionAlgs}`;
+    } else {
+        document.getElementById("progressDisplay").innerText = `Progress: ${currentAlgNumber - 1}/${totalSessionAlgs}`;
+    }
+
+    currentAlgNumber++;
+
+    upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
 
     if (shouldReadDrillTTS && currentAlgTest.cycleLetters) {
         speakText(parseLettersForTTS(currentAlgTest.cycleLetters.split("")));
     }
 
-   // upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
-
     document.getElementById("cycle").innerHTML = currentAlgTest.cycleLetters;
+    
     const upcomingCycleElement = document.getElementById("upcoming_cycle");
-
     if (upcomingAlgTest) {
         upcomingCycleElement.innerHTML = upcomingAlgTest.cycleLetters;
     } else {
         upcomingCycleElement.innerHTML = "End";
     }
-    
+
     testAlg(currentAlgTest);
 
     if (isUsingVirtualCube()) {

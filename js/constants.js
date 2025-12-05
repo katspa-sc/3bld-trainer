@@ -1,4 +1,4 @@
-const APP_VERSION = "v1.0.3 - pair selector rework"; 
+const APP_VERSION = "v1.0.4 - fix session and upcoming cycle tracking"; 
 
 const regularDrillOptions = [
     "klik", "bip",
