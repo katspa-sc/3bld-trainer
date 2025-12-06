@@ -1,4 +1,4 @@
-const APP_VERSION = "v1.0.4 - fix session and upcoming cycle tracking"; 
+const APP_VERSION = "v1.0.5 - partial keyboard support"; 
 
 const regularDrillOptions = [
     "klik", "bip",

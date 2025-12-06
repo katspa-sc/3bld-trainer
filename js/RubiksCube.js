@@ -1341,7 +1341,7 @@ function handleRightButton() {
     displayAlgorithmFromHistory(historyIndex);
 }
 
-try { //only for mobile
+try { 
     document.getElementById("onscreenLeft").addEventListener("click", handleLeftButton);
     document.getElementById("onscreenRight").addEventListener("click", handleRightButton);
 } catch (error) {
@@ -1362,94 +1362,88 @@ function updateControls() {
     keymaps.forEach(function (keymap) {
         listener.register(keymap[0], function () { doAlg(keymap[1], true) });
     });
+    
     listener.register(new KeyCombo("Backspace"), function () { displayAlgorithmForPreviousTest(true, true); });
+    
     listener.register(new KeyCombo("Escape"), function () {
         if (isUsingVirtualCube()) {
             stopTimer(false);
         }
         reTestAlg();
         document.getElementById("scramble").innerHTML = "&nbsp;";
-        
     });
+
     listener.register(new KeyCombo("Enter"), function () {
         nextScramble();
         doNothingNextTimeSpaceIsPressed = false;
     });
+
     listener.register(new KeyCombo("Tab"), function () {
         nextScramble();
         doNothingNextTimeSpaceIsPressed = false;
     });
+
     listener.register(new KeyCombo("ArrowLeft"), handleLeftButton);
-    listener.register(new KeyCombo("ArrowRight"), handleRightButton);
+    listener.register(new KeyCombo("ArrowRight"), function() {
+        nextScramble();
+        doNothingNextTimeSpaceIsPressed = false;
+    });
 }
 
 setInterval(updateControls, 300);
 
 function release(event) {
-    if (event.key == " " || event.type == "touchend") { //space
-        if (document.activeElement.type == "text") {
-            return;
-        }
-        if (document.activeElement.type == "textarea") {
+    if (event.key == " " || event.type == "touchend") {
+        if (document.activeElement.type == "text" || document.activeElement.type == "textarea") {
             return;
         }
 
-        document.getElementById("timer").style.color = "white"; //Timer should never b any color other than white when space is not pressed down
+        if (document.getElementById("timer").style.color == "green") {
+            startTimer();
+        }
+
+        document.getElementById("timer").style.color = "white"; 
     }
-};
+}
+
 document.onkeyup = release
-try { //only for mobile
+try {
     document.getElementById("touchStartArea").addEventListener("touchend", release);
 } catch (error) {
 
 }
 
 var doNothingNextTimeSpaceIsPressed = true;
-function press(event) { //Stops the screen from scrolling down when you press space
-    if (event.key == " " || event.type == "touchstart") { //space
-        if (document.activeElement.type == "text") {
-            return;
-        }
 
-        if (document.activeElement.type == "textarea") {
+function press(event) {
+    if (event.key == " " || event.type == "touchstart") { // Spacebar or Touch
+        if (document.activeElement.type == "text" || document.activeElement.type == "textarea") {
             return;
         }
 
         event.preventDefault();
+        
         if (!event.repeat) {
-            if (isUsingVirtualCube()) {
-                if (timerIsRunning) {
-                    stopTimer();
-                    displayAlgorithmForPreviousTest(true, false);//put false here if you don't want the cube to retest.
-                    //window.setTimeout(function (){reTestAlg();}, 250);
-                }
-                else {
-                    displayAlgorithmForPreviousTest(true, false);
-                }
+            if (timerIsRunning) {
+                stopTimer();
+                markCurrentCommAsGood();
+                showSuccessFeedback();
 
-            }
-            else { //If not using virtual cube
-                if (timerIsRunning) {//If timer is running, stop timer
-                    var time = stopTimer();
-                    doNothingNextTimeSpaceIsPressed = true;
-                    if (document.getElementById("goToNextCase").checked) {
-                        nextScramble(false);
-
-                        //document.getElementById("timer").innerHTML = time;
-                    } else {
-                        displayAlgorithmForPreviousTest(true, false);
-                    }
-
+                if (isDrillingMode) {
+                    retryDrill();
+                } else {
+                    nextScramble();
                 }
-
-                else if (document.getElementById("timer").innerHTML == "Ready") {
-                    document.getElementById("timer").style.color = "green";
-                }
+                
+                doNothingNextTimeSpaceIsPressed = true;
+            } 
+            else if (document.getElementById("timer").innerHTML == "Ready") {
+                document.getElementById("timer").style.color = "green";
             }
         }
     }
+}
 
-};
 document.onkeydown = press;
 try { //only for mobile
     document.getElementById("touchStartArea").addEventListener("touchstart", press);
