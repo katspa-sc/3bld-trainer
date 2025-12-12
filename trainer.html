@@ -26,21 +26,21 @@
             <button id="applyPartialFilterButton" class="large-button">Partial sheet</button>
             <button id="resetSessionButton" class="large-button start-session-button">Start session</button>
 
-            <div class="mode-toggle">
-                <label class="toggle-container">
-                    <input type="checkbox" id="modeToggle" />
-                    <span class="toggle-slider" id="modeToggleLabel">Corner</span>
-                </label>
-            </div>
+            <!-- Wrapper for both toggles -->
+            <div class="toggles-wrapper">
+                <div class="mode-toggle">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="modeToggle" />
+                        <span class="toggle-slider" id="modeToggleLabel">Corner</span>
+                    </label>
+                </div>
 
-            <!-- Add a toggle for Drilling Mode -->
-            <div class="mode-toggle">
-                <label class="toggle-container-drilling">
-                    <input type="checkbox" id="drillingModeToggle" />
-                    <span class="toggle-slider-drilling" id="drillingModeLabel">Regular</span>
-                </label>
+                <div class="mode-toggle">
+                    <div class="toggle-container-drilling" id="drillingModeContainer">
+                        <span class="toggle-slider-drilling" id="drillingModeLabel">Regular</span>
+                    </div>
+                </div>
             </div>
-
     
             <div id="selectionGrid" class="selection-grid" style="display: none;">
 
