@@ -112,7 +112,7 @@ p.cycle {
 .large-button:hover { background-color: #3658b0; }
 .large-button:active { background-color: #2a4a8a; transform: scale(0.95); }
 
-.fetch-algs-button { background-color: #9C27B0; color: black; }
+.fetch-algs-button { background-color: #9c27b0; color: black; }
 .fetch-algs-button:hover { background-color: #7B1FA2; }
 .fetch-algs-button:active { background-color: #6A1B9A; }
 
@@ -546,7 +546,7 @@ form input, form label, form button {
   position: relative;
   display: inline-block;
   width: 120px;
-  height: 40px;
+  height: 50px;
 }
 
 .toggle-container input, .toggle-container-drilling input {
@@ -555,41 +555,50 @@ form input, form label, form button {
   height: 0;
 }
 
-.toggle-slider {
+.toggle-slider, .toggle-slider-drilling {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #4285F4;
-  color: white;
-  text-align: center;
-  line-height: 40px;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 20px;
+  border-radius: 5px;
   cursor: pointer;
   transition: 0.3s;
+  user-select: none;
+  
+  /* Flexbox for centering two lines */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  
+  /* Text styling */
+  text-align: center;
+  line-height: 1.1;     /* Tighter line spacing */
+  white-space: pre;     /* Respect the \n newline character */
+  font-size: 14px;      /* Slightly smaller to fit two lines */
+  font-weight: bold;
 }
 
-.toggle-slider:hover {
+.toggle-slider {
+  background-color: #4b368b;
+  color: white;
+}
+
+.toggle-slider:hover, .toggle-slider-drilling:hover {
   filter: brightness(1.1);
   transform: scale(1.05);
 }
 
 .toggle-container input:checked + .toggle-slider {
-  background-color: #FF0000;
+  background-color: #1c624d;
+}
+
+.toggle-container-drilling input:checked + .toggle-slider-drilling {
+  background-color: #800080;
+  color: white;
 }
 
 .toggle-slider-drilling {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #FFD700;
-  color: black;
-  text-align: center;
-  line-height: 40px;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: 0.3s;
+  background-color: #4285F4; /* Default Regular */
+  color: white;
 }
 
 .toggle-slider-drilling:hover {
@@ -597,7 +606,12 @@ form input, form label, form button {
   transform: scale(1.05);
 }
 
-.toggle-container-drilling input:checked + .toggle-slider-drilling {
+.toggle-slider-drilling.state-drill {
+  background-color: #FFD700;
+  color: black;
+}
+
+.toggle-slider-drilling.state-drill-plus {
   background-color: #800080;
   color: white;
 }
@@ -730,4 +744,42 @@ form input, form label, form button {
 .save-start-action:hover {
   background-color: #f57c00;
   transform: scale(1.05);
+}
+
+.drill-sub-setting {
+  margin-top: -5px;
+  margin-bottom: 15px;
+  margin-left: 15px;
+  font-size: 15px;
+  color: #e0e0e0;
+  transition: opacity 0.3s ease;
+}
+
+.drill-sub-setting input[type="checkbox"] {
+  transform: scale(1.2);
+  margin-right: 8px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.drill-sub-setting label {
+  vertical-align: middle;
+}
+
+.drill-sub-setting label:hover {
+  color: white;
+}
+
+.toggles-wrapper {
+  display: flex;
+  flex-wrap: wrap;      /* NEW: Allows items to stack when space is tight */
+  gap: 8px;
+  grid-column: span 2;
+  width: 100%;
+}
+
+.toggles-wrapper .mode-toggle {
+  flex: 1 0 100px;      /* NEW: Flex-grow 1, Flex-shrink 0, Basis 100px */
+                        /* This forces them to stack if they have less than ~100px each */
+  width: auto;
 }

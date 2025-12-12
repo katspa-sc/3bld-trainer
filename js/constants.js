@@ -1,4 +1,4 @@
-const APP_VERSION = "v1.0.5 - partial keyboard support"; 
+const APP_VERSION = "v1.0.6 - drilling mode rework"; 
 
 const regularDrillOptions = [
     "klik", "bip",

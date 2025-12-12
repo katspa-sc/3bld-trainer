@@ -9,6 +9,70 @@ let upcomingAlgTest = null;
 let currentAlgNumber = 1; 
 let totalSessionAlgs = 0;
 
+const drillingModeContainer = document.getElementById("drillingModeContainer");
+const drillingModeLabel = document.getElementById("drillingModeLabel");
+
+// State Definitions: 0 = Regular, 1 = Drilling, 2 = Drilling + Inverses
+let drillState = parseInt(localStorage.getItem("drillState")) || 0;
+
+// Initialize global variables
+let isDrillingMode = false;
+let isDrillingWithInverses = false;
+
+function updateDrillStateVariables() {
+    switch (drillState) {
+        case 0: // Regular
+            isDrillingMode = false;
+            isDrillingWithInverses = false;
+            break;
+        case 1: // Drilling
+            isDrillingMode = true;
+            isDrillingWithInverses = false;
+            break;
+        case 2: // Drill + Inv
+            isDrillingMode = true;
+            isDrillingWithInverses = true;
+            break;
+    }
+}
+
+function updateDrillUI() {
+    if (!drillingModeLabel) return;
+    
+    // Reset classes
+    drillingModeLabel.className = "toggle-slider-drilling";
+
+    switch (drillState) {
+        case 0:
+            drillingModeLabel.textContent = "Mode:\nRegular";
+            break;
+        case 1:
+            drillingModeLabel.textContent = "Mode:\nDrill";
+            drillingModeLabel.classList.add("state-drill");
+            break;
+        case 2:
+            drillingModeLabel.textContent = "Mode:\nDrill+Inv";
+            drillingModeLabel.classList.add("state-drill-plus");
+            break;
+    }
+}
+
+if (drillingModeContainer) {
+    drillingModeContainer.addEventListener("click", function () {
+        drillState = (drillState + 1) % 3;
+        
+        localStorage.setItem("drillState", drillState);
+        updateDrillStateVariables();
+        updateDrillUI();
+
+        console.log(`Mode changed. State: ${drillState}, DrillMode: ${isDrillingMode}, WithInverses: ${isDrillingWithInverses}`);
+    });
+}
+
+// Initial Run
+updateDrillStateVariables();
+updateDrillUI();
+
 function getIndexToFaceMap() {
     const map = {};
     FACE_DEFINITIONS.forEach(face => {
@@ -77,62 +141,86 @@ let totalDrillPairs = 0;
 let shouldReadDrillTTS = true; 
 
 function initializeDrillingPairs(algsFromTextarea) {
-    console.log("Initializing drilling session from textbox content...");
-    
-    const fullAlgMap = new Map(fetchedAlgs.map(item => [item.value.trim(), item.key.trim()]));
-    const inverseKeyMap = new Map();
-    fetchedAlgs.forEach(item => {
-        const inverseKey = item.key[1] + item.key[0];
-        inverseKeyMap.set(item.key, inverseKey);
-    });
-
-    const keyToCommMap = new Map(fetchedAlgs.map(item => [item.key.trim(), item.value.trim()]));
-
-    const processed = new Set();
     drillingPairs = [];
-    const missingPairs = []; 
+    
+    if (isDrillingWithInverses) {
+        const fullAlgMap = new Map(fetchedAlgs.map(item => [item.value.trim(), item.key.trim()]));
+        const keyToAlgMap = new Map(fetchedAlgs.map(item => [item.key.trim(), item.value.trim()]));
+        const processedAlgs = new Set();
 
-    for (const alg of algsFromTextarea) {
-        const trimmedAlg = alg.trim();
-        if (processed.has(trimmedAlg)) {
-            continue;
+        for (const algStr of algsFromTextarea) {
+            const currentAlg = algStr.trim();
+            if (!currentAlg || processedAlgs.has(currentAlg)) continue;
+
+            let inverseAlg = null;
+            let currentKey = fullAlgMap.get(currentAlg);
+
+            // 1. Try to find an existing inverse within the maps
+            if (currentKey) {
+                const inverseKey = currentKey[1] + currentKey[0];
+                const inverseFromMap = keyToAlgMap.get(inverseKey);
+                if (inverseFromMap) {
+                    inverseAlg = inverseFromMap;
+                }
+            }
+
+            // 2. Fallback: Auto-generate inverse if missing
+            if (!inverseAlg) {
+                try {
+                    // EXPANSION STEP: Convert commutator notation (e.g. "U: [D, R]") into raw moves
+                    const expandedAlg = commToMoves(currentAlg);
+                    
+                    // Invert the raw moves
+                    const invertedRaw = alg.cube.invert(expandedAlg);
+                    
+                    // Simplify to remove things like "U U'"
+                    inverseAlg = alg.cube.simplify(invertedRaw);
+
+                } catch (e) {
+                    console.error("Failed to auto-generate inverse for:", currentAlg, e);
+                    inverseAlg = null;
+                }
+            }
+
+            // 3. Add to the list
+            if (inverseAlg) {
+                drillingPairs.push([currentAlg, inverseAlg]);
+                processedAlgs.add(currentAlg);
+                
+                // If the generated/found inverse is also in the user's text list, mark it as processed
+                if (algsFromTextarea.includes(inverseAlg)) {
+                    processedAlgs.add(inverseAlg);
+                }
+            } else {
+                // If generation failed, add as single item
+                drillingPairs.push([currentAlg]);
+                processedAlgs.add(currentAlg);
+            }
         }
-
-        const key = fullAlgMap.get(trimmedAlg);
-        if (!key) continue; 
-
-        const inverseKey = inverseKeyMap.get(key);
-        const inverseAlg = keyToCommMap.get(inverseKey);
-        
-        if (inverseAlg && algsFromTextarea.map(a => a.trim()).includes(inverseAlg.trim())) {
-            drillingPairs.push([trimmedAlg, inverseAlg]);
-            processed.add(trimmedAlg);
-            processed.add(inverseAlg.trim());
-        } else {
-            
-            missingPairs.push(`${trimmedAlg} (${key})`); 
+    } else {
+        // Regular Mode: Treat every line as a separate case
+        for (const algStr of algsFromTextarea) {
+            const trimmed = algStr.trim();
+            if (trimmed) {
+                drillingPairs.push([trimmed]); 
+            }
         }
     }
 
     if (drillingPairs.length === 0) {
-        alert("No valid algorithm pairs found for Drilling mode based on the content of the textbox. Please check your algorithms.");
+        alert("No valid algorithms found for Drilling mode.");
         return;
     }
 
+    // Shuffle pairs
     for (let i = drillingPairs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [drillingPairs[i], drillingPairs[j]] = [drillingPairs[j], drillingPairs[i]];
     }
 
     totalDrillPairs = drillingPairs.length;
-    console.log(`Found and shuffled ${totalDrillPairs} pairs for drilling.`);
-    isSecondInPair = false;
+    isSecondInPair = false; 
     shouldReadDrillTTS = true;
-
-    if (missingPairs.length > 0) {
-        alert(`The following commutators were valid but had no corresponding inverse:\n${missingPairs.join("\n")}`);
-        console.log("Missing pairs:", missingPairs);
-    }
 }
 
 function initializeSession() {
@@ -214,18 +302,19 @@ const savedMode = localStorage.getItem("mode") || "corner";
 let currentMode = savedMode;
 
 modeToggle.checked = currentMode === "edge";
-modeToggleLabel.textContent = currentMode === "edge" ? "Edge" : "Corner";
+modeToggleLabel.textContent = currentMode === "edge" ? "Piece:\nEdge" : "Piece:\nCorner";
 
 modeToggle.addEventListener("change", function () {
     currentMode = this.checked ? "edge" : "corner"; 
     localStorage.setItem("mode", currentMode); 
-    modeToggleLabel.textContent = currentMode === "edge" ? "Edge" : "Corner"; 
+    
+    // Update label with newline
+    modeToggleLabel.textContent = currentMode === "edge" ? "Piece:\nEdge" : "Piece:\nCorner";
+    
     updateProxyUrl(); 
-
     loadFetchedAlgs();
     loadSelectedSets();
     loadStickerState();
-
     updateUserDefinedAlgs();
 
     console.log(`Mode switched to: ${currentMode}`);
@@ -3134,23 +3223,6 @@ document.getElementById("cycle").addEventListener("click", function () {
     }).catch(err => {
         console.error("Failed to copy piece notation to clipboard:", err);
     });
-});
-
-const drillingModeToggle = document.getElementById("drillingModeToggle");
-const drillingModeLabel = document.getElementById("drillingModeLabel");
-
-const savedDrillingMode = localStorage.getItem("drillingMode") === "true";
-let isDrillingMode = savedDrillingMode;
-
-drillingModeToggle.checked = isDrillingMode;
-drillingModeLabel.textContent = isDrillingMode ? "Drilling" : "Regular";
-
-drillingModeToggle.addEventListener("change", function () {
-    isDrillingMode = this.checked; 
-    localStorage.setItem("drillingMode", isDrillingMode); 
-    drillingModeLabel.textContent = isDrillingMode ? "Drilling" : "Regular"; 
-
-    console.log(`Drilling Mode switched to: ${isDrillingMode ? "Drilling" : "Regular"}`);
 });
 
 async function fetchAndApplyPartialFilter() {
