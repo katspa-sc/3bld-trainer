@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Katspa's 3bld Trainer – Temporarily Unavailable</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .box {
+      max-width: 600px;
+      background: #1a1a1a;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
+
+    p {
+      line-height: 1.5;
+    }
+
+    a {
+      color: #4da3ff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .small {
+      color: #aaa;
+      font-size: 0.9rem;
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Katspa's 3bld Trainer temporarily uunavailable</h1>
+
+    <p>
+      This trainer is currently offline while I rework access and distribution.
+    </p>
+
+    <p>
+      In the meantime, you can use Nam's trainer. For MoYu V10AI you need to edit the SmartCube.js file in line 92.
+      The trainer is available here:
+      <br />
+      <a href="https://namisama269.github.io/3BLD-Alg-Trainer/R" target="_blank" rel="noopener">
+        Nam's 3BLD Trainer
+      </a>
+    </p>
+
+    <p>
+      Thanks for understanding.
+    </p>
+
+    <div class="small">
+      Local data for this site has been cleared.
+    </div>
+  </div>
+
+  <script>
+    (function clearStorage() {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+
+        if (window.indexedDB && indexedDB.databases) {
+          indexedDB.databases().then(dbs => {
+            dbs.forEach(db => {
+              if (db.name) {
+                indexedDB.deleteDatabase(db.name);
+              }
+            });
+          });
+        }
+      } catch (e) {
+        console.warn("Storage cleanup failed:", e);
+      }
+    })();
+  </script>
+</body>
+</html>
